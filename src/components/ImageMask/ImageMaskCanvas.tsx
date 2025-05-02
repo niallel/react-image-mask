@@ -516,61 +516,6 @@ const ImageMaskCanvas = forwardRef<ImageMaskCanvasRef, ImageMaskProps>((props, r
   return (
     <div className="image-mask-container">
       <div className="controls">
-        <div className="color-control">
-          <div className="color-section">
-            <label>Mask Color:</label>
-            <div className="color-options">
-              {colorOptions.map((color) => (
-                <button
-                  key={color.name}
-                  className={`color-option ${maskColor === color.value ? 'active' : ''}`}
-                  style={{ backgroundColor: color.value }}
-                  onClick={() => {
-                    setMaskColor(color.value);
-                    updateMaskColor(color.value);
-                  }}
-                  title={color.name}
-                />
-              ))}
-            </div>
-          </div>
-          <div className="opacity-section">
-            <label>Opacity: {Math.round(currentOpacity * 100)}%</label>
-            <input
-              type="range"
-              min="0"
-              max="100"
-              value={currentOpacity * 100}
-              onChange={(e) => setCurrentOpacity(Number(e.target.value) / 100)}
-            />
-          </div>
-          <div className="brush-size-section">
-            <label>Brush Size:</label>
-            <div className="brush-size-options">
-              {[5, 10, 20, 30, 40, 50, 60].map((size) => (
-                <button
-                  key={size}
-                  className={`brush-size-option ${brushSize === size ? 'active' : ''}`}
-                  onClick={() => setBrushSize(size)}
-                  title={`${size}px`}
-                >
-                  <div 
-                    className="brush-size-circle"
-                    style={{
-                      width: size,
-                      height: size,
-                      borderRadius: '50%',
-                      backgroundColor: brushSize === size 
-                        ? (props.toolMode?.startsWith('eraser') ? 'rgba(255, 0, 0, 1)' : maskColor)
-                        : (props.toolMode?.startsWith('eraser') ? 'rgba(255, 0, 0, 0.3)' : maskColor.replace('1)', '0.3)')),
-                      border: `1px solid ${props.toolMode?.startsWith('eraser') ? 'rgba(255, 0, 0, 0.5)' : maskColor}`
-                    }}
-                  />
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
       </div>
       <Stage
         ref={stageRef}

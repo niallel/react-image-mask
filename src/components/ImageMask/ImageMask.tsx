@@ -10,6 +10,9 @@ const ImageMask = () => {
     const [currentZoom, setCurrentZoom] = useState<number>(1);
     const [canUndo, setCanUndo] = useState<boolean>(false);
     const [canRedo, setCanRedo] = useState<boolean>(false);
+    const [currentMaskColor, setCurrentMaskColor] = useState<string>('rgba(0, 0, 0, 1)');
+    const [currentOpacity, setCurrentOpacity] = useState<number>(0.5);
+    const [currentBrushSize, setCurrentBrushSize] = useState<number>(10);
 
     const clearMask = useCallback(() => {
         canvasRef.current?.clearMask();
@@ -30,6 +33,21 @@ const ImageMask = () => {
         }
     }, []);
 
+    const handleMaskColorChange = useCallback((color: string) => {
+        setCurrentMaskColor(color);
+        canvasRef.current?.setMaskColor(color);
+    }, []);
+
+    const handleOpacityChange = useCallback((opacity: number) => {
+        setCurrentOpacity(opacity);
+        canvasRef.current?.setOpacity(opacity);
+    }, []);
+
+    const handleBrushSizeChange = useCallback((size: number) => {
+        setCurrentBrushSize(size);
+        canvasRef.current?.setBrushSize(size);
+    }, []);
+
     return (
         <div className="tool-mode">
             <ImageMaskControls 
@@ -43,6 +61,12 @@ const ImageMask = () => {
                 canUndo={canUndo}
                 canRedo={canRedo}
                 onDownloadMask={handleDownloadMask}
+                onMaskColorChange={handleMaskColorChange}
+                currentMaskColor={currentMaskColor}
+                onOpacityChange={handleOpacityChange}
+                currentOpacity={currentOpacity}
+                onBrushSizeChange={handleBrushSizeChange}
+                currentBrushSize={currentBrushSize}
             />
             <ImageMaskCanvas 
                 ref={canvasRef} 
