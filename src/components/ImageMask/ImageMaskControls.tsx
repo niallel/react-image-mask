@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { ToolMode, ColorOption } from "./types";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faUpDownLeftRight, faEraser, faMarker, faPenToSquare, faMagnifyingGlass } from "@fortawesome/free-solid-svg-icons";
+import { faArrowsUpDownLeftRight, faEraser, faMarker, faPenToSquare, faMagnifyingGlass, faRotateLeft, faRotateRight, faTrash, faCircleDown } from "@fortawesome/free-solid-svg-icons";
 import "./ImageMaskControls.css";
 
 const colorOptions: ColorOption[] = [
@@ -39,6 +39,47 @@ export const ImageMaskControls = ({setToolMode, toolMode, clearCanvas, currentZo
     const [showColorDropdown, setShowColorDropdown] = useState(false);
     const [showBrushDropdown, setShowBrushDropdown] = useState(false);
     const [showZoomDropdown, setShowZoomDropdown] = useState(false);
+    const controlsRef = useRef<HTMLDivElement>(null);
+
+    const closeAllDropdowns = () => {
+        setShowColorDropdown(false);
+        setShowBrushDropdown(false);
+        setShowZoomDropdown(false);
+    };
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (controlsRef.current && !controlsRef.current.contains(event.target as Node)) {
+                closeAllDropdowns();
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, []);
+
+    const handleColorClick = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        setShowColorDropdown(!showColorDropdown);
+        setShowBrushDropdown(false);
+        setShowZoomDropdown(false);
+    };
+
+    const handleBrushClick = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        setShowBrushDropdown(!showBrushDropdown);
+        setShowColorDropdown(false);
+        setShowZoomDropdown(false);
+    };
+
+    const handleZoomClick = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        setShowZoomDropdown(!showZoomDropdown);
+        setShowColorDropdown(false);
+        setShowBrushDropdown(false);
+    };
 
     const handleZoomChange = (zoom: number) => {
         const stage = document.querySelector('.Stage');
@@ -54,19 +95,64 @@ export const ImageMaskControls = ({setToolMode, toolMode, clearCanvas, currentZo
     };
 
     return (
-        <div className="controls-bar">
+        <div 
+            className="controls-bar" 
+            ref={controlsRef}
+            onClick={(e) => {
+                // Only close dropdowns if clicking directly on the bar (not on buttons or controls)
+                if (e.target === e.currentTarget) {
+                    closeAllDropdowns();
+                }
+            }}
+        >
+            <div className="action-buttons">
+                {onUndo && (
+                    <button 
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onUndo();
+                            closeAllDropdowns();
+                        }} 
+                        disabled={!canUndo} 
+                        title="Undo"
+                    >
+                        <FontAwesomeIcon icon={faRotateLeft} size="lg"/>
+                    </button>
+                )}
+                {onRedo && (
+                    <button 
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onRedo();
+                            closeAllDropdowns();
+                        }} 
+                        disabled={!canRedo} 
+                        title="Redo"
+                    >
+                        <FontAwesomeIcon icon={faRotateRight} size="lg"/>
+                    </button>
+                )}
+            </div>
             <div className="tool-buttons">
                 <button 
                     className={toolMode === 'move' ? 'active' : ''}
-                    onClick={() => setToolMode('move')}
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        setToolMode('move');
+                        closeAllDropdowns();
+                    }}
                     title="Move"
                 >
-                    <FontAwesomeIcon icon={faUpDownLeftRight} size="lg"/>
+                    <FontAwesomeIcon icon={faArrowsUpDownLeftRight} size="lg"/>
                 </button>
 
                 <button 
                     className={toolMode === 'mask-freehand' ? 'active' : ''}
-                    onClick={() => setToolMode('mask-freehand')}
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        setToolMode('mask-freehand');
+                        closeAllDropdowns();
+                    }}
                     title="Freehand Mask"
                 >
                     <FontAwesomeIcon icon={faMarker} size="lg"/>
@@ -74,7 +160,11 @@ export const ImageMaskControls = ({setToolMode, toolMode, clearCanvas, currentZo
 
                 <button 
                     className={toolMode === 'mask-box' ? 'active' : ''}
-                    onClick={() => setToolMode('mask-box')}
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        setToolMode('mask-box');
+                        closeAllDropdowns();
+                    }}
                     title="Box Mask"
                 >
                     <FontAwesomeIcon icon={faPenToSquare} size="lg"/>
@@ -82,7 +172,11 @@ export const ImageMaskControls = ({setToolMode, toolMode, clearCanvas, currentZo
 
                 <button 
                     className={toolMode === 'eraser-freehand' ? 'active' : ''}
-                    onClick={() => setToolMode('eraser-freehand')}
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        setToolMode('eraser-freehand');
+                        closeAllDropdowns();
+                    }}
                     title="Freehand Eraser"
                 >
                     <FontAwesomeIcon icon={faEraser} size="lg"/>
@@ -90,7 +184,11 @@ export const ImageMaskControls = ({setToolMode, toolMode, clearCanvas, currentZo
 
                 <button 
                     className={toolMode === 'eraser-box' ? 'active' : ''}
-                    onClick={() => setToolMode('eraser-box')}
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        setToolMode('eraser-box');
+                        closeAllDropdowns();
+                    }}
                     title="Box Eraser"
                 >
                     <FontAwesomeIcon icon={faEraser} size="lg"/>
@@ -100,7 +198,7 @@ export const ImageMaskControls = ({setToolMode, toolMode, clearCanvas, currentZo
             <div className="dropdown-container">
                 <button 
                     className="dropdown-button"
-                    onClick={() => setShowColorDropdown(!showColorDropdown)}
+                    onClick={handleColorClick}
                     title="Color Options"
                 >
                     <div className="current-color" style={{ backgroundColor: currentMaskColor }} />
@@ -112,7 +210,8 @@ export const ImageMaskControls = ({setToolMode, toolMode, clearCanvas, currentZo
                                 key={color.name}
                                 className={`color-option ${currentMaskColor === color.value ? 'active' : ''}`}
                                 style={{ backgroundColor: color.value }}
-                                onClick={() => {
+                                onClick={(e) => {
+                                    e.stopPropagation();
                                     onMaskColorChange?.(color.value);
                                     setShowColorDropdown(false);
                                 }}
@@ -126,7 +225,7 @@ export const ImageMaskControls = ({setToolMode, toolMode, clearCanvas, currentZo
             <div className="dropdown-container">
                 <button 
                     className="dropdown-button"
-                    onClick={() => setShowBrushDropdown(!showBrushDropdown)}
+                    onClick={handleBrushClick}
                     title="Brush Size"
                 >
                     <div className="current-brush" style={{ 
@@ -142,7 +241,8 @@ export const ImageMaskControls = ({setToolMode, toolMode, clearCanvas, currentZo
                             <button
                                 key={size}
                                 className={`brush-option ${currentBrushSize === size ? 'active' : ''}`}
-                                onClick={() => {
+                                onClick={(e) => {
+                                    e.stopPropagation();
                                     onBrushSizeChange?.(size);
                                     setShowBrushDropdown(false);
                                 }}
@@ -169,30 +269,41 @@ export const ImageMaskControls = ({setToolMode, toolMode, clearCanvas, currentZo
                     min="0"
                     max="100"
                     value={currentOpacity ? currentOpacity * 100 : 50}
-                    onChange={(e) => onOpacityChange?.(Number(e.target.value) / 100)}
+                    onChange={(e) => {
+                        onOpacityChange?.(Number(e.target.value) / 100);
+                        closeAllDropdowns();
+                    }}
+                    onMouseDown={(e) => {
+                        e.stopPropagation();
+                        closeAllDropdowns();
+                    }}
                     title={`Opacity: ${currentOpacity ? Math.round(currentOpacity * 100) : 50}%`}
                 />
             </div>
 
             <div className="action-buttons">
                 {clearCanvas && (
-                    <button onClick={clearCanvas} title="Clear Mask">
-                        Clear
-                    </button>
-                )}
-                {onUndo && (
-                    <button onClick={onUndo} disabled={!canUndo} title="Undo">
-                        Undo
-                    </button>
-                )}
-                {onRedo && (
-                    <button onClick={onRedo} disabled={!canRedo} title="Redo">
-                        Redo
+                    <button 
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            clearCanvas();
+                            closeAllDropdowns();
+                        }} 
+                        title="Clear Mask"
+                    >
+                        <FontAwesomeIcon icon={faTrash} size="lg"/>
                     </button>
                 )}
                 {onDownloadMask && (
-                    <button onClick={onDownloadMask} title="Download Mask">
-                        Download
+                    <button 
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onDownloadMask();
+                            closeAllDropdowns();
+                        }} 
+                        title="Download Mask"
+                    >
+                        <FontAwesomeIcon icon={faCircleDown} size="lg"/>
                     </button>
                 )}
             </div>
@@ -200,7 +311,7 @@ export const ImageMaskControls = ({setToolMode, toolMode, clearCanvas, currentZo
             <div className="dropdown-container">
                 <button 
                     className="dropdown-button"
-                    onClick={() => setShowZoomDropdown(!showZoomDropdown)}
+                    onClick={handleZoomClick}
                     title="Zoom Level"
                 >
                     <FontAwesomeIcon icon={faMagnifyingGlass} size="lg"/>
@@ -212,7 +323,10 @@ export const ImageMaskControls = ({setToolMode, toolMode, clearCanvas, currentZo
                             <button
                                 key={zoom}
                                 className={`zoom-option ${currentZoom === zoom ? 'active' : ''}`}
-                                onClick={() => handleZoomChange(zoom)}
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleZoomChange(zoom);
+                                }}
                                 title={`${zoom}%`}
                             >
                                 {zoom}%
