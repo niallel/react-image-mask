@@ -28,6 +28,27 @@
     gap: 0.5rem;
 }
 
+.tool-buttons button,
+.dropdown-button,
+.action-buttons button {
+    min-width: 60px;
+}
+
+.button-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.button-content span {
+    font-size: 0.75rem;
+    text-align: center;
+    color: #666;
+    font-family: inherit;
+    font-weight: normal;
+}
+
 .tool-buttons button {
     padding: 0.5rem;
     border: none;
@@ -155,9 +176,23 @@
     min-width: 100px;
 }
 
+.opacity-control .button-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+    width: 100%;
+}
+
 .opacity-control input[type="range"] {
     width: 100%;
     cursor: pointer;
+}
+
+.opacity-control .button-content span {
+    font-size: 0.75rem;
+    text-align: center;
+    color: #666;
 }
 
 .action-buttons {
@@ -232,4 +267,10 @@
     background-color: #e0e0e0;
     color: #333;
     font-weight: bold;
+}
+
+.zoom-icon-text {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
 }

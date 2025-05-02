@@ -116,7 +116,10 @@ export const ImageMaskControls = ({setToolMode, toolMode, clearCanvas, currentZo
                         disabled={!canUndo} 
                         title="Undo"
                     >
-                        <FontAwesomeIcon icon={faRotateLeft} size="lg"/>
+                        <div className="button-content">
+                            <FontAwesomeIcon icon={faRotateLeft} size="lg"/>
+                            <span>Undo</span>
+                        </div>
                     </button>
                 )}
                 {onRedo && (
@@ -129,7 +132,10 @@ export const ImageMaskControls = ({setToolMode, toolMode, clearCanvas, currentZo
                         disabled={!canRedo} 
                         title="Redo"
                     >
-                        <FontAwesomeIcon icon={faRotateRight} size="lg"/>
+                        <div className="button-content">
+                            <FontAwesomeIcon icon={faRotateRight} size="lg"/>
+                            <span>Redo</span>
+                        </div>
                     </button>
                 )}
             </div>
@@ -143,7 +149,10 @@ export const ImageMaskControls = ({setToolMode, toolMode, clearCanvas, currentZo
                     }}
                     title="Move"
                 >
-                    <FontAwesomeIcon icon={faArrowsUpDownLeftRight} size="lg"/>
+                    <div className="button-content">
+                        <FontAwesomeIcon icon={faArrowsUpDownLeftRight} size="lg"/>
+                        <span>Move</span>
+                    </div>
                 </button>
 
                 <button 
@@ -155,7 +164,10 @@ export const ImageMaskControls = ({setToolMode, toolMode, clearCanvas, currentZo
                     }}
                     title="Freehand Mask"
                 >
-                    <FontAwesomeIcon icon={faMarker} size="lg"/>
+                    <div className="button-content">
+                        <FontAwesomeIcon icon={faMarker} size="lg"/>
+                        <span>Draw</span>
+                    </div>
                 </button>
 
                 <button 
@@ -167,7 +179,10 @@ export const ImageMaskControls = ({setToolMode, toolMode, clearCanvas, currentZo
                     }}
                     title="Box Mask"
                 >
-                    <FontAwesomeIcon icon={faPenToSquare} size="lg"/>
+                    <div className="button-content">
+                        <FontAwesomeIcon icon={faPenToSquare} size="lg"/>
+                        <span>Box</span>
+                    </div>
                 </button>
 
                 <button 
@@ -179,7 +194,10 @@ export const ImageMaskControls = ({setToolMode, toolMode, clearCanvas, currentZo
                     }}
                     title="Freehand Eraser"
                 >
-                    <FontAwesomeIcon icon={faEraser} size="lg"/>
+                    <div className="button-content">
+                        <FontAwesomeIcon icon={faEraser} size="lg"/>
+                        <span>Erase</span>
+                    </div>
                 </button>
 
                 <button 
@@ -191,7 +209,10 @@ export const ImageMaskControls = ({setToolMode, toolMode, clearCanvas, currentZo
                     }}
                     title="Box Eraser"
                 >
-                    <FontAwesomeIcon icon={faEraser} size="lg"/>
+                    <div className="button-content">
+                        <FontAwesomeIcon icon={faEraser} size="lg"/>
+                        <span>Box</span>
+                    </div>
                 </button>
             </div>
 
@@ -201,7 +222,10 @@ export const ImageMaskControls = ({setToolMode, toolMode, clearCanvas, currentZo
                     onClick={handleColorClick}
                     title="Color Options"
                 >
-                    <div className="current-color" style={{ backgroundColor: currentMaskColor }} />
+                    <div className="button-content">
+                        <div className="current-color" style={{ backgroundColor: currentMaskColor }} />
+                        <span>Color</span>
+                    </div>
                 </button>
                 {showColorDropdown && (
                     <div className="dropdown-menu color-dropdown">
@@ -228,12 +252,15 @@ export const ImageMaskControls = ({setToolMode, toolMode, clearCanvas, currentZo
                     onClick={handleBrushClick}
                     title="Brush Size"
                 >
-                    <div className="current-brush" style={{ 
-                        width: currentBrushSize, 
-                        height: currentBrushSize,
-                        backgroundColor: toolMode?.startsWith('eraser') ? 'rgba(255, 0, 0, 0.3)' : currentMaskColor?.replace('1)', '0.3)'),
-                        border: `1px solid ${toolMode?.startsWith('eraser') ? 'rgba(255, 0, 0, 0.5)' : currentMaskColor}`
-                    }} />
+                    <div className="button-content">
+                        <div className="current-brush" style={{ 
+                            width: currentBrushSize, 
+                            height: currentBrushSize,
+                            backgroundColor: toolMode?.startsWith('eraser') ? 'rgba(255, 0, 0, 0.3)' : currentMaskColor?.replace('1)', '0.3)'),
+                            border: `1px solid ${toolMode?.startsWith('eraser') ? 'rgba(255, 0, 0, 0.5)' : currentMaskColor}`
+                        }} />
+                        <span>Size</span>
+                    </div>
                 </button>
                 {showBrushDropdown && (
                     <div className="dropdown-menu brush-dropdown">
@@ -264,21 +291,24 @@ export const ImageMaskControls = ({setToolMode, toolMode, clearCanvas, currentZo
             </div>
 
             <div className="opacity-control">
-                <input
-                    type="range"
-                    min="0"
-                    max="100"
-                    value={currentOpacity ? currentOpacity * 100 : 50}
-                    onChange={(e) => {
-                        onOpacityChange?.(Number(e.target.value) / 100);
-                        closeAllDropdowns();
-                    }}
-                    onMouseDown={(e) => {
-                        e.stopPropagation();
-                        closeAllDropdowns();
-                    }}
-                    title={`Opacity: ${currentOpacity ? Math.round(currentOpacity * 100) : 50}%`}
-                />
+                <div className="button-content">
+                    <input
+                        type="range"
+                        min="0"
+                        max="100"
+                        value={currentOpacity ? currentOpacity * 100 : 50}
+                        onChange={(e) => {
+                            onOpacityChange?.(Number(e.target.value) / 100);
+                            closeAllDropdowns();
+                        }}
+                        onMouseDown={(e) => {
+                            e.stopPropagation();
+                            closeAllDropdowns();
+                        }}
+                        title={`Opacity: ${currentOpacity ? Math.round(currentOpacity * 100) : 50}%`}
+                    />
+                    <span>Opacity</span>
+                </div>
             </div>
 
             <div className="action-buttons">
@@ -291,7 +321,10 @@ export const ImageMaskControls = ({setToolMode, toolMode, clearCanvas, currentZo
                         }} 
                         title="Clear Mask"
                     >
-                        <FontAwesomeIcon icon={faTrash} size="lg"/>
+                        <div className="button-content">
+                            <FontAwesomeIcon icon={faTrash} size="lg"/>
+                            <span>Clear</span>
+                        </div>
                     </button>
                 )}
                 {onDownloadMask && (
@@ -303,7 +336,10 @@ export const ImageMaskControls = ({setToolMode, toolMode, clearCanvas, currentZo
                         }} 
                         title="Download Mask"
                     >
-                        <FontAwesomeIcon icon={faCircleDown} size="lg"/>
+                        <div className="button-content">
+                            <FontAwesomeIcon icon={faCircleDown} size="lg"/>
+                            <span>Download</span>
+                        </div>
                     </button>
                 )}
             </div>
@@ -314,8 +350,12 @@ export const ImageMaskControls = ({setToolMode, toolMode, clearCanvas, currentZo
                     onClick={handleZoomClick}
                     title="Zoom Level"
                 >
-                    <FontAwesomeIcon icon={faMagnifyingGlass} size="lg"/>
-                    <span>{currentZoom}%</span>
+                    <div className="button-content">
+                        <div className="zoom-icon-text">
+                            <FontAwesomeIcon icon={faMagnifyingGlass} size="lg"/>
+                            <span>{currentZoom}%</span>
+                        </div>
+                    </div>
                 </button>
                 {showZoomDropdown && (
                     <div className="dropdown-menu zoom-dropdown">
