@@ -53,6 +53,8 @@ const ImageMaskCanvas = forwardRef<ImageMaskCanvasRef, ImageMaskProps>((props, r
     img.onload = () => {
       console.log('Image loaded with dimensions:', img.width, 'x', img.height);
       setImage(img);
+      // Send initial zoom value when image is loaded
+      props.onZoomChange?.(Math.round(scale * 100));
     };
 
     // Initialize mask canvas
@@ -116,7 +118,10 @@ const ImageMaskCanvas = forwardRef<ImageMaskCanvasRef, ImageMaskProps>((props, r
     newHistory.push(newState);
     setHistory(newHistory);
     setHistoryIndex(newHistory.length - 1);
-  }, [maskCanvas, history, historyIndex, props.toolMode]);
+    
+    // Emit history change event
+    props.onHistoryChange?.(historyIndex > 0, false);
+  }, [maskCanvas, history, historyIndex, props.toolMode, props.onHistoryChange]);
 
   const loadStateFromHistory = (index: number) => {
     if (!maskCanvas || index < 0 || index >= history.length) return;
@@ -142,6 +147,7 @@ const ImageMaskCanvas = forwardRef<ImageMaskCanvasRef, ImageMaskProps>((props, r
       const newIndex = historyIndex - 1;
       loadStateFromHistory(newIndex);
       setHistoryIndex(newIndex);
+      props.onHistoryChange?.(newIndex > 0, true);
     }
   };
 
@@ -150,6 +156,7 @@ const ImageMaskCanvas = forwardRef<ImageMaskCanvasRef, ImageMaskProps>((props, r
       const newIndex = historyIndex + 1;
       loadStateFromHistory(newIndex);
       setHistoryIndex(newIndex);
+      props.onHistoryChange?.(true, newIndex < history.length - 1);
     }
   };
 
@@ -484,11 +491,6 @@ const ImageMaskCanvas = forwardRef<ImageMaskCanvasRef, ImageMaskProps>((props, r
     };
   }, []);
 
-  const resetZoom = () => {
-    setScale(1);
-    setPosition({ x: 0, y: 0 });
-  }
-
   useImperativeHandle(ref, () => ({
     getMaskData: () => maskCanvas?.toDataURL() || null,
     clearMask,
@@ -506,26 +508,14 @@ const ImageMaskCanvas = forwardRef<ImageMaskCanvasRef, ImageMaskProps>((props, r
     },
     setBrushSize: (size: number) => {
       setBrushSize(size);
-    }
+    },
+    canUndo: historyIndex > 0,
+    canRedo: historyIndex < history.length - 1
   }));
 
   return (
     <div className="image-mask-container">
       <div className="controls">
-        <div className="tool-mode">
-          <button 
-            onClick={undo}
-            disabled={historyIndex <= 0}
-          >
-            Undo
-          </button>
-          <button 
-            onClick={redo}
-            disabled={historyIndex >= history.length - 1}
-          >
-            Redo
-          </button>
-        </div>
         <div className="color-control">
           <div className="color-section">
             <label>Mask Color:</label>

@@ -26,6 +26,7 @@ export interface ImageMaskProps {
   toolMode: ToolMode;
   ref?: React.RefObject<React.FC<ImageMaskProps>>;
   onZoomChange?: (zoom: number) => void;
+  onHistoryChange?: (canUndo: boolean, canRedo: boolean) => void;
 }
 
 export interface ColorOption {
@@ -42,4 +43,6 @@ export interface ImageMaskCanvasRef {
   setMaskColor: (color: string) => void;
   setOpacity: (opacity: number) => void;
   setBrushSize: (size: number) => void;
+  canUndo: boolean;
+  canRedo: boolean;
 }

@@ -3,12 +3,16 @@ import { ToolMode } from "./types";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faUpDownLeftRight, faEraser, faMarker, faPenToSquare } from "@fortawesome/free-solid-svg-icons";
 
-export const ImageMaskControls = ({setToolMode, toolMode, clearCanvas, currentZoom, onResetZoom}: {
+export const ImageMaskControls = ({setToolMode, toolMode, clearCanvas, currentZoom, onResetZoom, onUndo, onRedo, canUndo, canRedo}: {
     setToolMode: (toolMode: ToolMode) => void, 
     toolMode: ToolMode,
     clearCanvas?: () => void,
     currentZoom?: number,
-    onResetZoom?: () => void
+    onResetZoom?: () => void,
+    onUndo?: () => void,
+    onRedo?: () => void,
+    canUndo?: boolean,
+    canRedo?: boolean
 }) => {
 
     // const [currentOpacity, setCurrentOpacity] = useState<number>(opacity);
@@ -57,6 +61,10 @@ export const ImageMaskControls = ({setToolMode, toolMode, clearCanvas, currentZo
             <div className="zoom-display">
                 Zoom: {currentZoom}%
                 {onResetZoom && <button onClick={onResetZoom}>Reset Zoom</button>}
+            </div>
+            <div className="history-controls">
+                {onUndo && <button onClick={onUndo} disabled={!canUndo}>Undo</button>}
+                {onRedo && <button onClick={onRedo} disabled={!canRedo}>Redo</button>}
             </div>
         </div>
     )
