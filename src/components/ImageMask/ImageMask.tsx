@@ -48,6 +48,11 @@ const ImageMask = () => {
         canvasRef.current?.setBrushSize(size);
     }, []);
 
+    const handleResetZoom = useCallback(() => {
+        setCurrentZoom(100);
+        canvasRef.current?.resetZoom();
+    }, []);
+
     return (
         <div className="tool-mode">
             <ImageMaskControls 
@@ -55,7 +60,7 @@ const ImageMask = () => {
                 toolMode={toolMode}
                 clearCanvas={clearMask}
                 currentZoom={currentZoom}
-                onResetZoom={() => setCurrentZoom(100)}
+                onResetZoom={handleResetZoom}
                 onUndo={() => canvasRef.current?.undo()}
                 onRedo={() => canvasRef.current?.redo()}
                 canUndo={canUndo}
