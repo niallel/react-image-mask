@@ -23,11 +23,23 @@ export interface ImageMaskProps {
   width?: number;
   height?: number;
   opacity?: number;
-  toolMode?: ToolMode;
+  toolMode: ToolMode;
   ref?: React.RefObject<React.FC<ImageMaskProps>>;
+  onZoomChange?: (zoom: number) => void;
 }
 
 export interface ColorOption {
   name: string;
   value: string;
 } 
+
+export interface ImageMaskCanvasRef {
+  getMaskData: () => string | null;
+  clearMask: () => void;
+  undo: () => void;
+  redo: () => void;
+  setToolMode: (mode: ToolMode) => void;
+  setMaskColor: (color: string) => void;
+  setOpacity: (opacity: number) => void;
+  setBrushSize: (size: number) => void;
+}

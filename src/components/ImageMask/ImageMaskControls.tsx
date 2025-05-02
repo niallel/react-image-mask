@@ -1,7 +1,15 @@
 import { useState } from "react";
 import { ToolMode } from "./types";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faUpDownLeftRight, faEraser, faMarker, faPenToSquare } from "@fortawesome/free-solid-svg-icons";
 
-export const ImageMaskControls = ({setToolMode, toolMode}: {setToolMode: (toolMode: ToolMode) => void, toolMode: ToolMode}) => {
+export const ImageMaskControls = ({setToolMode, toolMode, clearCanvas, currentZoom, onResetZoom}: {
+    setToolMode: (toolMode: ToolMode) => void, 
+    toolMode: ToolMode,
+    clearCanvas?: () => void,
+    currentZoom?: number,
+    onResetZoom?: () => void
+}) => {
 
     // const [currentOpacity, setCurrentOpacity] = useState<number>(opacity);
     return (
@@ -10,36 +18,46 @@ export const ImageMaskControls = ({setToolMode, toolMode}: {setToolMode: (toolMo
                 className={toolMode === 'move' ? 'active' : ''}
                 onClick={() => setToolMode('move')}
                 >
-                Move
+                <FontAwesomeIcon icon={faUpDownLeftRight} size="2x"/><span>Move</span>
             </button>
 
             <button 
                 className={toolMode === 'mask-freehand' ? 'active' : ''}
                 onClick={() => setToolMode('mask-freehand')}
                 >
-                Mask Freehand
+                <FontAwesomeIcon icon={faMarker} size="2x"/>
             </button>
 
             <button 
                 className={toolMode === 'mask-box' ? 'active' : ''}
                 onClick={() => setToolMode('mask-box')}
                 >
-                Mask Box
+                <FontAwesomeIcon icon={faPenToSquare} size="2x"/>
             </button>
 
             <button 
                 className={toolMode === 'eraser-freehand' ? 'active' : ''}
                 onClick={() => setToolMode('eraser-freehand')}
                 >
-                Eraser Freehand
+                <FontAwesomeIcon icon={faEraser} size="2x"/>
             </button>
 
             <button 
                 className={toolMode === 'eraser-box' ? 'active' : ''}
                 onClick={() => setToolMode('eraser-box')}
                 >
-                Eraser Box
+                <FontAwesomeIcon icon={faEraser} size="2x"/>
             </button>
+
+            {clearCanvas && <button 
+                onClick={() => clearCanvas()}
+                >
+                Clear Mask
+            </button>}
+            <div className="zoom-display">
+                Zoom: {currentZoom}%
+                {onResetZoom && <button onClick={onResetZoom}>Reset Zoom</button>}
+            </div>
         </div>
     )
 }

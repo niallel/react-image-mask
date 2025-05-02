@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect, useCallback, forwardRef, useImperat
 import { Stage, Layer, Image, Group, Line, Rect, Circle } from 'react-konva';
 import Konva from 'konva';
 import { downloadMask } from './utils/downloadMask';
-import { ToolMode, Point, BoxSelection, HistoryState, ImageMaskProps, ColorOption } from './types';
+import { ToolMode, Point, BoxSelection, HistoryState, ImageMaskProps, ColorOption, ImageMaskCanvasRef } from './types';
 import './ImageMaskCanvas.css';
 
 const colorOptions: ColorOption[] = [
@@ -14,17 +14,6 @@ const colorOptions: ColorOption[] = [
   { name: 'Orange', value: 'rgba(255, 165, 0, 1)' },
   { name: 'Pink', value: 'rgba(255, 192, 203, 1)' }
 ];
-
-export interface ImageMaskCanvasRef {
-  getMaskData: () => string | null;
-  clearMask: () => void;
-  undo: () => void;
-  redo: () => void;
-  setToolMode: (mode: ToolMode) => void;
-  setMaskColor: (color: string) => void;
-  setOpacity: (opacity: number) => void;
-  setBrushSize: (size: number) => void;
-}
 
 const ImageMaskCanvas = forwardRef<ImageMaskCanvasRef, ImageMaskProps>((props, ref) => {
   const [image, setImage] = useState<HTMLImageElement | null>(null);
@@ -50,6 +39,13 @@ const ImageMaskCanvas = forwardRef<ImageMaskCanvasRef, ImageMaskProps>((props, r
   const lastUpdateTimeRef = useRef<number>(0);
   const animationFrameRef = useRef<number | undefined>(undefined);
   const tempCanvasRef = useRef<HTMLCanvasElement | null>(null);
+
+  const getScaledPoint = (point: Point): Point => {
+    return {
+      x: (point.x - position.x) / scale,
+      y: (point.y - position.y) / scale
+    };
+  };
 
   useEffect(() => {
     const img = new window.Image();
@@ -112,7 +108,7 @@ const ImageMaskCanvas = forwardRef<ImageMaskCanvasRef, ImageMaskProps>((props, r
 
     const newState: HistoryState = {
       canvasData: maskCanvas.toDataURL(),
-      toolMode: props.toolMode || 'mask-freehand'
+      toolMode: props.toolMode
     };
 
     // If we're not at the end of history, remove future states
@@ -120,7 +116,7 @@ const ImageMaskCanvas = forwardRef<ImageMaskCanvasRef, ImageMaskProps>((props, r
     newHistory.push(newState);
     setHistory(newHistory);
     setHistoryIndex(newHistory.length - 1);
-  }, [maskCanvas, props.toolMode, history, historyIndex]);
+  }, [maskCanvas, history, historyIndex, props.toolMode]);
 
   const loadStateFromHistory = (index: number) => {
     if (!maskCanvas || index < 0 || index >= history.length) return;
@@ -286,7 +282,7 @@ const ImageMaskCanvas = forwardRef<ImageMaskCanvasRef, ImageMaskProps>((props, r
         animationFrameRef.current = requestAnimationFrame(updatePreview);
       }
     }
-  }, [isDrawing, startPoint, props.toolMode, updatePreview]);
+  }, [isDrawing, startPoint, props.toolMode, updatePreview, getScaledPoint]);
 
   const handleMouseDown = (e: Konva.KonvaEventObject<MouseEvent>) => {
     if (props.toolMode === 'move') return;
@@ -343,7 +339,7 @@ const ImageMaskCanvas = forwardRef<ImageMaskCanvasRef, ImageMaskProps>((props, r
     setStartPoint(null);
   }, [isDrawing, props.toolMode, currentBox, props.width, props.height, drawOnMask, drawBoxOnMask]);
 
-  const clearDrawing = () => {
+  const clearMask = () => {
     if (!maskCanvas || !tempCanvas) return;
 
     const ctx = maskCanvas.getContext('2d');
@@ -383,7 +379,7 @@ const ImageMaskCanvas = forwardRef<ImageMaskCanvasRef, ImageMaskProps>((props, r
     if (!pointer) return;
 
     // Calculate new scale
-    const newScale = e.evt.deltaY > 0 ? oldScale * 0.9 : oldScale * 1.1;
+    const newScale = e.evt.deltaY > 0 ? oldScale * 0.98 : oldScale * 1.02;
     // Limit scale between 1 and 10
     const boundedScale = Math.min(Math.max(1, newScale), 10);
 
@@ -400,6 +396,9 @@ const ImageMaskCanvas = forwardRef<ImageMaskCanvasRef, ImageMaskProps>((props, r
 
     setScale(boundedScale);
     setPosition(newPosition);
+    
+    // Call the callback if provided, converting scale to percentage
+    props.onZoomChange?.(Math.round(boundedScale * 100));
   };
 
   const updateMaskOpacity = () => {
@@ -485,13 +484,6 @@ const ImageMaskCanvas = forwardRef<ImageMaskCanvasRef, ImageMaskProps>((props, r
     };
   }, []);
 
-  const getScaledPoint = (point: Point): Point => {
-    return {
-      x: (point.x - position.x) / scale,
-      y: (point.y - position.y) / scale
-    };
-  };
-
   const resetZoom = () => {
     setScale(1);
     setPosition({ x: 0, y: 0 });
@@ -499,13 +491,11 @@ const ImageMaskCanvas = forwardRef<ImageMaskCanvasRef, ImageMaskProps>((props, r
 
   useImperativeHandle(ref, () => ({
     getMaskData: () => maskCanvas?.toDataURL() || null,
-    clearMask: clearDrawing,
+    clearMask,
     undo,
     redo,
     setToolMode: (mode: ToolMode) => {
-      if (props.toolMode !== undefined) {
-        props.toolMode = mode;
-      }
+      // No need to set state since it's controlled by parent
     },
     setMaskColor: (color: string) => {
       setMaskColor(color);
@@ -523,19 +513,6 @@ const ImageMaskCanvas = forwardRef<ImageMaskCanvasRef, ImageMaskProps>((props, r
     <div className="image-mask-container">
       <div className="controls">
         <div className="tool-mode">
-          <button 
-            className={props.toolMode === 'clear' ? 'active' : ''}
-            onClick={() => {
-              clearDrawing();
-            }}
-          >
-            Clear Mask
-          </button>
-          <button 
-            onClick={resetZoom}
-          >
-            Reset Zoom ({Math.round(scale * 100)}%)
-          </button>
           <button 
             onClick={undo}
             disabled={historyIndex <= 0}

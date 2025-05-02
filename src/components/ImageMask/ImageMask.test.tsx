@@ -68,7 +68,7 @@ describe('ImageMask', () => {
   });
 
   it('renders the component with default props', () => {
-    render(<ImageMask src={mockImageSrc} />);
+    render(<ImageMask src={mockImageSrc} toolMode="mask-freehand" />);
     
     // Check if the component renders
     expect(screen.getByTestId('image-mask-container')).toBeInTheDocument();
@@ -86,7 +86,7 @@ describe('ImageMask', () => {
   });
 
   it('handles tool mode changes', () => {
-    render(<ImageMask src={mockImageSrc} />);
+    render(<ImageMask src={mockImageSrc} toolMode="mask-freehand" />);
     
     // Test Move mode
     fireEvent.click(screen.getByText('Move'));
@@ -110,7 +110,7 @@ describe('ImageMask', () => {
   });
 
   it('handles color selection', () => {
-    render(<ImageMask src={mockImageSrc} />);
+    render(<ImageMask src={mockImageSrc} toolMode="mask-freehand" />);
     
     // Get all color options
     const colorOptions = screen.getAllByRole('button', { name: /color-option/i });
@@ -123,7 +123,7 @@ describe('ImageMask', () => {
   });
 
   it('handles opacity changes', () => {
-    render(<ImageMask src={mockImageSrc} />);
+    render(<ImageMask src={mockImageSrc} toolMode="mask-freehand" />);
     
     const opacitySlider = screen.getByRole('slider');
     fireEvent.change(opacitySlider, { target: { value: '50' } });
@@ -132,7 +132,7 @@ describe('ImageMask', () => {
   });
 
   it('handles zoom controls', () => {
-    render(<ImageMask src={mockImageSrc} />);
+    render(<ImageMask src={mockImageSrc} toolMode="mask-freehand" />);
     
     // Test reset zoom
     fireEvent.click(screen.getByText('Reset Zoom'));
@@ -140,7 +140,7 @@ describe('ImageMask', () => {
   });
 
   it('handles undo/redo functionality', async () => {
-    render(<ImageMask src={mockImageSrc} />);
+    render(<ImageMask src={mockImageSrc} toolMode="mask-freehand" />);
     
     // Start with undo/redo buttons disabled
     expect(screen.getByText('Undo')).toBeDisabled();
@@ -167,7 +167,7 @@ describe('ImageMask', () => {
   });
 
   it('handles clear mask functionality', () => {
-    render(<ImageMask src={mockImageSrc} />);
+    render(<ImageMask src={mockImageSrc} toolMode="mask-freehand" />);
     
     // Make a change first
     fireEvent.click(screen.getByText('Mask Freehand'));
@@ -185,10 +185,7 @@ describe('ImageMask', () => {
   });
 
   it('handles box drawing', () => {
-    render(<ImageMask src={mockImageSrc} />);
-    
-    // Select box tool
-    fireEvent.click(screen.getByText('Mask Box'));
+    render(<ImageMask src={mockImageSrc} toolMode="mask-box" />);
     
     const stage = screen.getByTestId('drawing-stage');
     // Start drawing a box
@@ -201,7 +198,7 @@ describe('ImageMask', () => {
   });
 
   it('handles eraser functionality', () => {
-    render(<ImageMask src={mockImageSrc} />);
+    render(<ImageMask src={mockImageSrc} toolMode="mask-freehand" />);
     
     // First draw something
     fireEvent.click(screen.getByText('Mask Freehand'));
