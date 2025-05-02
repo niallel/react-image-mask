@@ -254,12 +254,12 @@ export const ImageMaskControls = ({setToolMode, toolMode, clearCanvas, currentZo
                 >
                     <div className="button-content">
                         <div className="current-brush" style={{ 
-                            width: currentBrushSize, 
-                            height: currentBrushSize,
+                            width: 20, 
+                            height: 20,
                             backgroundColor: toolMode?.startsWith('eraser') ? 'rgba(255, 0, 0, 0.3)' : currentMaskColor?.replace('1)', '0.3)'),
                             border: `1px solid ${toolMode?.startsWith('eraser') ? 'rgba(255, 0, 0, 0.5)' : currentMaskColor}`
                         }} />
-                        <span>Size</span>
+                        <span>{currentBrushSize}px</span>
                     </div>
                 </button>
                 {showBrushDropdown && (
@@ -275,6 +275,7 @@ export const ImageMaskControls = ({setToolMode, toolMode, clearCanvas, currentZo
                                 }}
                                 title={`${size}px`}
                             >
+                                <span>{size}px</span>
                                 <div 
                                     className="brush-size-circle"
                                     style={{

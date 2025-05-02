@@ -191,6 +191,7 @@
 
 .opacity-control .button-content span {
     font-size: 0.75rem;
+    font-family: system-ui;
     text-align: center;
     color: #666;
 }
