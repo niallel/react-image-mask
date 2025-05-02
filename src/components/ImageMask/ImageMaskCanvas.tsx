@@ -79,8 +79,12 @@ const ImageMaskCanvas = forwardRef<ImageMaskCanvasRef, ImageMaskProps>((props, r
     }
     setTempCanvas(temp);
 
-    // Add initial state to history
-    setHistory([{ canvasData: canvas.toDataURL(), toolMode: 'mask-freehand' }]);
+    // Add initial empty state to history
+    const initialState: HistoryState = {
+      canvasData: canvas.toDataURL(),
+      toolMode: 'mask-freehand'
+    };
+    setHistory([initialState]);
     setHistoryIndex(0);
   }, [props.src, props.width, props.height]);
 
@@ -119,8 +123,8 @@ const ImageMaskCanvas = forwardRef<ImageMaskCanvasRef, ImageMaskProps>((props, r
     setHistory(newHistory);
     setHistoryIndex(newHistory.length - 1);
     
-    // Emit history change event
-    props.onHistoryChange?.(historyIndex > 0, false);
+    // Emit history change event - enable undo if we have more than one state
+    props.onHistoryChange?.(newHistory.length > 1, false);
   }, [maskCanvas, history, historyIndex, props.toolMode, props.onHistoryChange]);
 
   const loadStateFromHistory = (index: number) => {
@@ -509,7 +513,7 @@ const ImageMaskCanvas = forwardRef<ImageMaskCanvasRef, ImageMaskProps>((props, r
     setBrushSize: (size: number) => {
       setBrushSize(size);
     },
-    canUndo: historyIndex > 0,
+    canUndo: history.length > 1,
     canRedo: historyIndex < history.length - 1,
     resetZoom: () => {
       setScale(1);
