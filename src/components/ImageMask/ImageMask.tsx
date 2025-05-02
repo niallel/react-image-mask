@@ -20,6 +20,16 @@ const ImageMask = () => {
         setCanRedo(canRedo);
     }, []);
 
+    const handleDownloadMask = useCallback(() => {
+        const maskData = canvasRef.current?.getMaskData();
+        if (maskData) {
+            const link = document.createElement('a');
+            link.href = maskData;
+            link.download = 'mask.png';
+            link.click();
+        }
+    }, []);
+
     return (
         <div className="tool-mode">
             <ImageMaskControls 
@@ -32,6 +42,7 @@ const ImageMask = () => {
                 onRedo={() => canvasRef.current?.redo()}
                 canUndo={canUndo}
                 canRedo={canRedo}
+                onDownloadMask={handleDownloadMask}
             />
             <ImageMaskCanvas 
                 ref={canvasRef} 

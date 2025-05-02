@@ -570,9 +570,6 @@ const ImageMaskCanvas = forwardRef<ImageMaskCanvasRef, ImageMaskProps>((props, r
               ))}
             </div>
           </div>
-          <button onClick={() => downloadMask(maskCanvas, props.width || 1024, props.height || 1024)}>
-            Download Mask
-          </button>
         </div>
       </div>
       <Stage

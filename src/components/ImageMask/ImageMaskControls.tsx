@@ -3,7 +3,7 @@ import { ToolMode } from "./types";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faUpDownLeftRight, faEraser, faMarker, faPenToSquare } from "@fortawesome/free-solid-svg-icons";
 
-export const ImageMaskControls = ({setToolMode, toolMode, clearCanvas, currentZoom, onResetZoom, onUndo, onRedo, canUndo, canRedo}: {
+export const ImageMaskControls = ({setToolMode, toolMode, clearCanvas, currentZoom, onResetZoom, onUndo, onRedo, canUndo, canRedo, onDownloadMask}: {
     setToolMode: (toolMode: ToolMode) => void, 
     toolMode: ToolMode,
     clearCanvas?: () => void,
@@ -12,7 +12,8 @@ export const ImageMaskControls = ({setToolMode, toolMode, clearCanvas, currentZo
     onUndo?: () => void,
     onRedo?: () => void,
     canUndo?: boolean,
-    canRedo?: boolean
+    canRedo?: boolean,
+    onDownloadMask?: () => void
 }) => {
 
     // const [currentOpacity, setCurrentOpacity] = useState<number>(opacity);
@@ -66,6 +67,7 @@ export const ImageMaskControls = ({setToolMode, toolMode, clearCanvas, currentZo
                 {onUndo && <button onClick={onUndo} disabled={!canUndo}>Undo</button>}
                 {onRedo && <button onClick={onRedo} disabled={!canRedo}>Redo</button>}
             </div>
+            {onDownloadMask && <button onClick={onDownloadMask}>Download Mask</button>}
         </div>
     )
 }
