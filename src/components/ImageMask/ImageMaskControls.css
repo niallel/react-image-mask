@@ -204,3 +204,32 @@
 .zoom-control button:hover {
     background-color: #d0d0d0;
 }
+
+.zoom-dropdown {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    min-width: 100px;
+}
+
+.zoom-option {
+    padding: 0.5rem;
+    border: none;
+    background: none;
+    cursor: pointer;
+    border-radius: 4px;
+    color: #666;
+    transition: all 0.2s ease;
+    text-align: left;
+}
+
+.zoom-option:hover {
+    background-color: #e0e0e0;
+    color: #333;
+}
+
+.zoom-option.active {
+    background-color: #e0e0e0;
+    color: #333;
+    font-weight: bold;
+}

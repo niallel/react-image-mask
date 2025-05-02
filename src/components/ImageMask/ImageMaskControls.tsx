@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { ToolMode, ColorOption } from "./types";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faUpDownLeftRight, faEraser, faMarker, faPenToSquare, faPalette, faBrush } from "@fortawesome/free-solid-svg-icons";
+import { faUpDownLeftRight, faEraser, faMarker, faPenToSquare, faMagnifyingGlass } from "@fortawesome/free-solid-svg-icons";
 import "./ImageMaskControls.css";
 
 const colorOptions: ColorOption[] = [
@@ -15,8 +15,9 @@ const colorOptions: ColorOption[] = [
 ];
 
 const brushSizes = [5, 10, 20, 30, 40, 50, 60];
+const zoomLevels = [100, 200, 300, 400, 500, 600, 700, 800, 900, 1000];
 
-export const ImageMaskControls = ({setToolMode, toolMode, clearCanvas, currentZoom, onResetZoom, onUndo, onRedo, canUndo, canRedo, onDownloadMask, onMaskColorChange, currentMaskColor, onOpacityChange, currentOpacity, onBrushSizeChange, currentBrushSize}: {
+export const ImageMaskControls = ({setToolMode, toolMode, clearCanvas, currentZoom, onResetZoom, onUndo, onRedo, canUndo, canRedo, onDownloadMask, onMaskColorChange, currentMaskColor, onOpacityChange, currentOpacity, onBrushSizeChange, currentBrushSize, onZoomChange}: {
     setToolMode: (toolMode: ToolMode) => void, 
     toolMode: ToolMode,
     clearCanvas?: () => void,
@@ -32,10 +33,25 @@ export const ImageMaskControls = ({setToolMode, toolMode, clearCanvas, currentZo
     onOpacityChange?: (opacity: number) => void,
     currentOpacity?: number,
     onBrushSizeChange?: (size: number) => void,
-    currentBrushSize?: number
+    currentBrushSize?: number,
+    onZoomChange?: (zoom: number) => void
 }) => {
     const [showColorDropdown, setShowColorDropdown] = useState(false);
     const [showBrushDropdown, setShowBrushDropdown] = useState(false);
+    const [showZoomDropdown, setShowZoomDropdown] = useState(false);
+
+    const handleZoomChange = (zoom: number) => {
+        const stage = document.querySelector('.Stage');
+        if (stage) {
+            const scale = zoom / 100;
+            (stage as any).scale({ x: scale, y: scale });
+            // Update the zoom display
+            if (onZoomChange) {
+                onZoomChange(zoom);
+            }
+        }
+        setShowZoomDropdown(false);
+    };
 
     return (
         <div className="controls-bar">
@@ -87,7 +103,6 @@ export const ImageMaskControls = ({setToolMode, toolMode, clearCanvas, currentZo
                     onClick={() => setShowColorDropdown(!showColorDropdown)}
                     title="Color Options"
                 >
-                    <FontAwesomeIcon icon={faPalette} size="lg"/>
                     <div className="current-color" style={{ backgroundColor: currentMaskColor }} />
                 </button>
                 {showColorDropdown && (
@@ -114,7 +129,6 @@ export const ImageMaskControls = ({setToolMode, toolMode, clearCanvas, currentZo
                     onClick={() => setShowBrushDropdown(!showBrushDropdown)}
                     title="Brush Size"
                 >
-                    <FontAwesomeIcon icon={faBrush} size="lg"/>
                     <div className="current-brush" style={{ 
                         width: currentBrushSize, 
                         height: currentBrushSize,
@@ -183,12 +197,28 @@ export const ImageMaskControls = ({setToolMode, toolMode, clearCanvas, currentZo
                 )}
             </div>
 
-            <div className="zoom-control">
-                <span title={`Zoom: ${currentZoom}%`}>{currentZoom}%</span>
-                {onResetZoom && (
-                    <button onClick={onResetZoom} title="Reset Zoom">
-                        Reset
-                    </button>
+            <div className="dropdown-container">
+                <button 
+                    className="dropdown-button"
+                    onClick={() => setShowZoomDropdown(!showZoomDropdown)}
+                    title="Zoom Level"
+                >
+                    <FontAwesomeIcon icon={faMagnifyingGlass} size="lg"/>
+                    <span>{currentZoom}%</span>
+                </button>
+                {showZoomDropdown && (
+                    <div className="dropdown-menu zoom-dropdown">
+                        {zoomLevels.map((zoom) => (
+                            <button
+                                key={zoom}
+                                className={`zoom-option ${currentZoom === zoom ? 'active' : ''}`}
+                                onClick={() => handleZoomChange(zoom)}
+                                title={`${zoom}%`}
+                            >
+                                {zoom}%
+                            </button>
+                        ))}
+                    </div>
                 )}
             </div>
         </div>
