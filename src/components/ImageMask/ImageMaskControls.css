@@ -203,15 +203,16 @@
 .action-buttons button {
     padding: 0.5rem 1rem;
     border: none;
-    background-color: #e0e0e0;
-    color: #333;
+    background: none;
+    color: #666;
     border-radius: 4px;
     cursor: pointer;
-    transition: background-color 0.2s ease;
+    transition: all 0.2s ease;
 }
 
 .action-buttons button:hover {
-    background-color: #d0d0d0;
+    background-color: #e0e0e0;
+    color: #333;
 }
 
 .action-buttons button:disabled {
