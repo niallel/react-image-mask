@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { ToolMode, ColorOption } from "./types";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faArrowsUpDownLeftRight, faEraser, faMarker, faPenToSquare, faMagnifyingGlass, faRotateLeft, faRotateRight, faTrash, faCircleDown, faDrawPolygon } from "@fortawesome/free-solid-svg-icons";
+import { faArrowsUpDownLeftRight, faEraser, faMarker, faSquare, faMagnifyingGlass, faRotateLeft, faRotateRight, faTrash, faCircleDown, faDrawPolygon } from "@fortawesome/free-solid-svg-icons";
 import "./ImageMaskControls.css";
 
 const colorOptions: ColorOption[] = [
@@ -174,7 +174,7 @@ export const ImageMaskControls = ({setToolMode, toolMode, clearCanvas, currentZo
                     >
                         <div className="button-content">
                             {toolMode === 'mask-freehand' && <FontAwesomeIcon icon={faMarker} size="lg"/>}
-                            {toolMode === 'mask-box' && <FontAwesomeIcon icon={faPenToSquare} size="lg"/>}
+                            {toolMode === 'mask-box' && <FontAwesomeIcon icon={faSquare} size="lg"/>}
                             {toolMode === 'mask-polygon' && <FontAwesomeIcon icon={faDrawPolygon} size="lg"/>}
                             {!toolMode.startsWith('mask-') && <FontAwesomeIcon icon={faMarker} size="lg"/>}
                             <span>Mask</span>
@@ -190,7 +190,7 @@ export const ImageMaskControls = ({setToolMode, toolMode, clearCanvas, currentZo
                             </button>
                             <button onClick={() => handleMaskToolSelect('box')}>
                                 <div className="button-content">
-                                    <FontAwesomeIcon icon={faPenToSquare} size="lg"/>
+                                    <FontAwesomeIcon icon={faSquare} size="lg"/>
                                     <span>Box</span>
                                 </div>
                             </button>
@@ -216,7 +216,7 @@ export const ImageMaskControls = ({setToolMode, toolMode, clearCanvas, currentZo
                     >
                         <div className="button-content">
                             {toolMode === 'eraser-freehand' && <FontAwesomeIcon icon={faEraser} size="lg"/>}
-                            {toolMode === 'eraser-box' && <FontAwesomeIcon icon={faPenToSquare} size="lg"/>}
+                            {toolMode === 'eraser-box' && <FontAwesomeIcon icon={faSquare} size="lg"/>}
                             {!toolMode.startsWith('eraser-') && <FontAwesomeIcon icon={faEraser} size="lg"/>}
                             <span>Eraser</span>
                         </div>
@@ -231,7 +231,7 @@ export const ImageMaskControls = ({setToolMode, toolMode, clearCanvas, currentZo
                             </button>
                             <button onClick={() => handleEraserToolSelect('box')}>
                                 <div className="button-content">
-                                    <FontAwesomeIcon icon={faPenToSquare} size="lg"/>
+                                    <FontAwesomeIcon icon={faSquare} size="lg"/>
                                     <span>Box</span>
                                 </div>
                             </button>
