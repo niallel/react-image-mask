@@ -17,7 +17,7 @@ const colorOptions: ColorOption[] = [
 const brushSizes = [5, 10, 20, 30, 40, 50, 60];
 const zoomLevels = [100, 200, 300, 400, 500, 600, 700, 800, 900, 1000];
 
-export const ImageMaskControls = ({setToolMode, toolMode, clearCanvas, currentZoom, onResetZoom, undo, redo, canUndo, canRedo, onDownloadMask, setMaskColor, currentMaskColor, setOpacity, currentOpacity, setBrushSize, currentBrushSize, onZoomChange, canvasRef}: {
+export const ImageMaskControls = ({setToolMode, toolMode, clearCanvas, currentZoom, onResetZoom, undo, redo, canUndo, canRedo, onDownloadMask, setMaskColor, currentMaskColor, setOpacity, currentOpacity, setBrushSize, currentBrushSize, setZoom}: {
     setToolMode: (toolMode: ToolMode) => void, 
     toolMode: ToolMode,
     clearCanvas?: () => void,
@@ -34,8 +34,7 @@ export const ImageMaskControls = ({setToolMode, toolMode, clearCanvas, currentZo
     currentOpacity?: number,
     setBrushSize?: (size: number) => void,
     currentBrushSize?: number,
-    onZoomChange?: (zoom: number) => void,
-    canvasRef: React.RefObject<ImageMaskCanvasRef | null>
+    setZoom?: (zoom: number) => void
 }) => {
     const [showColorDropdown, setShowColorDropdown] = useState(false);
     const [showBrushDropdown, setShowBrushDropdown] = useState(false);
@@ -83,10 +82,8 @@ export const ImageMaskControls = ({setToolMode, toolMode, clearCanvas, currentZo
     };
 
     const handleZoomChange = (zoom: number) => {
-        if (onZoomChange) {
-            onZoomChange(zoom);
-            // Call setZoom directly on the canvas ref
-            canvasRef.current?.setZoom(zoom);
+        if (setZoom) {
+            setZoom(zoom);
         }
         setShowZoomDropdown(false);
     };

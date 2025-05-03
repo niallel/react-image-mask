@@ -53,6 +53,11 @@ const ImageMask = () => {
         canvasRef.current?.resetZoom();
     }, []);
 
+    const setZoom = useCallback((zoom: number) => {
+        setCurrentZoom(zoom);
+        canvasRef.current?.setZoom(zoom);
+    }, []);
+
     return (
         <div className="tool-mode">
             <ImageMaskControls 
@@ -72,8 +77,7 @@ const ImageMask = () => {
                 currentOpacity={currentOpacity}
                 setBrushSize={setBrushSize}
                 currentBrushSize={currentBrushSize}
-                onZoomChange={setCurrentZoom}
-                canvasRef={canvasRef}
+                setZoom={setZoom}
             />
             <ImageMaskCanvas 
                 ref={canvasRef} 
