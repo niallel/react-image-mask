@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { ToolMode, ColorOption, ImageMaskCanvasRef } from "./types";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faArrowsUpDownLeftRight, faEraser, faMarker, faPenToSquare, faMagnifyingGlass, faRotateLeft, faRotateRight, faTrash, faCircleDown } from "@fortawesome/free-solid-svg-icons";
+import { faArrowsUpDownLeftRight, faEraser, faMarker, faPenToSquare, faMagnifyingGlass, faRotateLeft, faRotateRight, faTrash, faCircleDown, faDrawPolygon } from "@fortawesome/free-solid-svg-icons";
 import "./ImageMaskControls.css";
 
 const colorOptions: ColorOption[] = [
@@ -179,6 +179,21 @@ export const ImageMaskControls = ({setToolMode, toolMode, clearCanvas, currentZo
                     <div className="button-content">
                         <FontAwesomeIcon icon={faPenToSquare} size="lg"/>
                         <span>Box</span>
+                    </div>
+                </button>
+
+                <button 
+                    className={toolMode === 'mask-polygon' ? 'active' : ''}
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        setToolMode('mask-polygon');
+                        closeAllDropdowns();
+                    }}
+                    title="Polygon Mask"
+                >
+                    <div className="button-content">
+                        <FontAwesomeIcon icon={faDrawPolygon} size="lg"/>
+                        <span>Polygon</span>
                     </div>
                 </button>
 

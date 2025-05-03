@@ -1,4 +1,4 @@
-export type ToolMode = 'move' | 'mask-freehand' | 'mask-box' | 'eraser-freehand' | 'eraser-box' | 'clear';
+export type ToolMode = 'move' | 'mask-freehand' | 'mask-box' | 'mask-polygon' | 'eraser-freehand' | 'eraser-box' | 'clear';
 
 export interface Point {
   x: number;

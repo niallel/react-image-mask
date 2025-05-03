@@ -22,6 +22,9 @@ const ImageMaskCanvas = forwardRef<ImageMaskCanvasRef, ImageMaskProps>((props, r
   const [maskColor, setMaskColor] = useState<string>('rgba(0, 0, 0, 1)');
   const [brushSize, setBrushSize] = useState<number>(10);
   const [cursorPosition, setCursorPosition] = useState<Point | null>(null);
+  const [polygonPoints, setPolygonPoints] = useState<Point[]>([]);
+  const [isDrawingPolygon, setIsDrawingPolygon] = useState(false);
+  const [tempPolygonPoint, setTempPolygonPoint] = useState<Point | null>(null);
 
   const stageRef = useRef<Konva.Stage>(null);
   const layerRef = useRef<Konva.Layer>(null);
@@ -251,6 +254,39 @@ const ImageMaskCanvas = forwardRef<ImageMaskCanvasRef, ImageMaskProps>((props, r
     saveToHistory();
   }, [maskCanvas, getMaskColorWithOpacity, updateMaskImage, saveToHistory]);
 
+  const drawPolygonOnMask = useCallback((points: Point[]) => {
+    if (!maskCanvas || !tempCanvasRef.current) return;
+    const ctx = maskCanvas.getContext('2d');
+    const tempCtx = tempCanvasRef.current.getContext('2d');
+    if (!ctx || !tempCtx) return;
+    if (points.length < 3) return;
+
+    // Clear the temporary canvas
+    tempCtx.clearRect(0, 0, props.width || 1024, props.height || 1024);
+    
+    // Copy the current mask state to the temporary canvas
+    tempCtx.drawImage(maskCanvas, 0, 0);
+
+    // Draw the polygon
+    tempCtx.globalCompositeOperation = 'source-over';
+    tempCtx.beginPath();
+    tempCtx.moveTo(points[0].x, points[0].y);
+    for (let i = 1; i < points.length; i++) {
+      tempCtx.lineTo(points[i].x, points[i].y);
+    }
+    tempCtx.closePath();
+    tempCtx.fillStyle = getMaskColorWithOpacity();
+    tempCtx.fill();
+
+    // Copy the result back to the main canvas
+    ctx.clearRect(0, 0, props.width || 1024, props.height || 1024);
+    ctx.drawImage(tempCanvasRef.current, 0, 0);
+
+    // Update the mask image and save to history
+    updateMaskImage();
+    saveToHistory();
+  }, [maskCanvas, getMaskColorWithOpacity, updateMaskImage, saveToHistory, props.width, props.height]);
+
   const handleMouseMove = useCallback((e: Konva.KonvaEventObject<MouseEvent>) => {
     const stage = e.target.getStage();
     if (!stage) return;
@@ -260,6 +296,13 @@ const ImageMaskCanvas = forwardRef<ImageMaskCanvasRef, ImageMaskProps>((props, r
 
     const scaledPoint = getScaledPoint(point);
     setCursorPosition(scaledPoint);
+
+    if (props.toolMode === 'mask-polygon') {
+      if (isDrawingPolygon && polygonPoints.length > 0) {
+        setTempPolygonPoint(scaledPoint);
+      }
+      return;
+    }
 
     if (!isDrawing || !startPoint) return;
 
@@ -283,7 +326,7 @@ const ImageMaskCanvas = forwardRef<ImageMaskCanvasRef, ImageMaskProps>((props, r
         animationFrameRef.current = requestAnimationFrame(updatePreview);
       }
     }
-  }, [isDrawing, startPoint, props.toolMode, updatePreview, getScaledPoint]);
+  }, [isDrawing, startPoint, props.toolMode, updatePreview, getScaledPoint, isDrawingPolygon, polygonPoints]);
 
   const handleMouseDown = (e: Konva.KonvaEventObject<MouseEvent>) => {
     if (props.toolMode === 'move') return;
@@ -295,6 +338,32 @@ const ImageMaskCanvas = forwardRef<ImageMaskCanvasRef, ImageMaskProps>((props, r
     if (!point) return;
 
     const scaledPoint = getScaledPoint(point);
+
+    if (props.toolMode === 'mask-polygon') {
+      if (!isDrawingPolygon) {
+        setIsDrawingPolygon(true);
+        setPolygonPoints([scaledPoint]);
+      } else {
+        // Check if we're closing the polygon (clicking near the first point)
+        if (polygonPoints.length > 2) {
+          const firstPoint = polygonPoints[0];
+          const distance = Math.sqrt(
+            Math.pow(scaledPoint.x - firstPoint.x, 2) +
+            Math.pow(scaledPoint.y - firstPoint.y, 2)
+          );
+          if (distance < 10) { // Close the polygon if within 10 pixels of first point
+            drawPolygonOnMask(polygonPoints);
+            setIsDrawingPolygon(false);
+            setPolygonPoints([]);
+            setTempPolygonPoint(null);
+            return;
+          }
+        }
+        setPolygonPoints([...polygonPoints, scaledPoint]);
+      }
+      return;
+    }
+
     setIsDrawing(true);
     setStartPoint(scaledPoint);
     
@@ -306,6 +375,8 @@ const ImageMaskCanvas = forwardRef<ImageMaskCanvasRef, ImageMaskProps>((props, r
   };
 
   const handleMouseUp = useCallback(() => {
+    if (props.toolMode === 'mask-polygon') return;
+
     if (!isDrawing || !props.toolMode || props.toolMode === 'move') return;
 
     const isEraser = props.toolMode.startsWith('eraser');
@@ -569,7 +640,7 @@ const ImageMaskCanvas = forwardRef<ImageMaskCanvasRef, ImageMaskProps>((props, r
         data-testid="drawing-stage"
         style={{
           cursor: props.toolMode === 'move' ? 'grab' :
-                 props.toolMode === 'mask-box' || props.toolMode === 'eraser-box' ? 'crosshair' :
+                 props.toolMode === 'mask-box' || props.toolMode === 'eraser-box' || props.toolMode === 'mask-polygon' ? 'crosshair' :
                  props.toolMode === 'clear' ? 'pointer' : 'none'
         }}
       >
@@ -587,6 +658,29 @@ const ImageMaskCanvas = forwardRef<ImageMaskCanvasRef, ImageMaskProps>((props, r
               width={props.width || 1024}
               height={props.height || 1024}
             />
+          )}
+          {props.toolMode === 'mask-polygon' && polygonPoints.length > 0 && (
+            <Group>
+              <Line
+                points={[...polygonPoints, tempPolygonPoint].filter((point): point is Point => point !== null).flatMap(point => [point.x, point.y])}
+                stroke={getMaskColorWithOpacity()}
+                strokeWidth={2}
+                lineCap="round"
+                lineJoin="round"
+                closed={false}
+              />
+              {polygonPoints.map((point, index) => (
+                <Circle
+                  key={index}
+                  x={point.x}
+                  y={point.y}
+                  radius={4}
+                  fill={getMaskColorWithOpacity()}
+                  stroke="white"
+                  strokeWidth={1}
+                />
+              ))}
+            </Group>
           )}
           {currentPath.length > 0 && (
             <Group>
