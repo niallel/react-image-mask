@@ -48,11 +48,6 @@ const ImageMask = () => {
         canvasRef.current?.setBrushSize(size);
     }, []);
 
-    const handleResetZoom = useCallback(() => {
-        setCurrentZoom(100);
-        canvasRef.current?.resetZoom();
-    }, []);
-
     const setZoom = useCallback((zoom: number) => {
         setCurrentZoom(zoom);
         canvasRef.current?.setZoom(zoom);
@@ -65,7 +60,6 @@ const ImageMask = () => {
                 toolMode={toolMode}
                 clearCanvas={clearMask}
                 currentZoom={currentZoom}
-                onResetZoom={handleResetZoom}
                 undo={() => canvasRef.current?.undo()}
                 redo={() => canvasRef.current?.redo()}
                 canUndo={canUndo}

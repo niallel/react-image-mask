@@ -615,10 +615,6 @@ const ImageMaskCanvas = forwardRef<ImageMaskCanvasRef, ImageMaskProps>((props, r
     },
     canUndo: history.length > 1,
     canRedo: historyIndex < history.length - 1,
-    resetZoom: () => {
-      setScale(1);
-      setPosition({ x: 0, y: 0 });
-    },
     setZoom: setZoom
   }));
 

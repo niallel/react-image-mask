@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { ToolMode, ColorOption, ImageMaskCanvasRef } from "./types";
+import { ToolMode, ColorOption } from "./types";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faArrowsUpDownLeftRight, faEraser, faMarker, faPenToSquare, faMagnifyingGlass, faRotateLeft, faRotateRight, faTrash, faCircleDown, faDrawPolygon } from "@fortawesome/free-solid-svg-icons";
 import "./ImageMaskControls.css";
@@ -17,12 +17,11 @@ const colorOptions: ColorOption[] = [
 const brushSizes = [5, 10, 20, 30, 40, 50, 60];
 const zoomLevels = [100, 200, 300, 400, 500, 600, 700, 800, 900, 1000];
 
-export const ImageMaskControls = ({setToolMode, toolMode, clearCanvas, currentZoom, onResetZoom, undo, redo, canUndo, canRedo, onDownloadMask, setMaskColor, currentMaskColor, setOpacity, currentOpacity, setBrushSize, currentBrushSize, setZoom}: {
+export const ImageMaskControls = ({setToolMode, toolMode, clearCanvas, currentZoom, undo, redo, canUndo, canRedo, onDownloadMask, setMaskColor, currentMaskColor, setOpacity, currentOpacity, setBrushSize, currentBrushSize, setZoom}: {
     setToolMode: (toolMode: ToolMode) => void, 
     toolMode: ToolMode,
     clearCanvas?: () => void,
     currentZoom?: number,
-    onResetZoom?: () => void,
     undo?: () => void,
     redo?: () => void,
     canUndo?: boolean,
