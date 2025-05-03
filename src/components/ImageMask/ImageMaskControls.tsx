@@ -68,6 +68,8 @@ export const ImageMaskControls = ({setToolMode, toolMode, clearCanvas, currentZo
         setShowColorDropdown(!showColorDropdown);
         setShowBrushDropdown(false);
         setShowZoomDropdown(false);
+        setShowMaskDropdown(false);
+        setShowEraserDropdown(false);
     };
 
     const handleBrushClick = (e: React.MouseEvent) => {
@@ -75,6 +77,8 @@ export const ImageMaskControls = ({setToolMode, toolMode, clearCanvas, currentZo
         setShowBrushDropdown(!showBrushDropdown);
         setShowColorDropdown(false);
         setShowZoomDropdown(false);
+        setShowMaskDropdown(false);
+        setShowEraserDropdown(false);
     };
 
     const handleZoomClick = (e: React.MouseEvent) => {
@@ -82,6 +86,8 @@ export const ImageMaskControls = ({setToolMode, toolMode, clearCanvas, currentZo
         setShowZoomDropdown(!showZoomDropdown);
         setShowColorDropdown(false);
         setShowBrushDropdown(false);
+        setShowMaskDropdown(false);
+        setShowEraserDropdown(false);
     };
 
     const handleZoomChange = (zoom: number) => {
@@ -169,6 +175,9 @@ export const ImageMaskControls = ({setToolMode, toolMode, clearCanvas, currentZo
                             e.stopPropagation();
                             setShowMaskDropdown(!showMaskDropdown);
                             setShowEraserDropdown(false);
+                            setShowColorDropdown(false);
+                            setShowBrushDropdown(false);
+                            setShowZoomDropdown(false);
                         }}
                         title="Mask Tools"
                     >
@@ -211,6 +220,9 @@ export const ImageMaskControls = ({setToolMode, toolMode, clearCanvas, currentZo
                             e.stopPropagation();
                             setShowEraserDropdown(!showEraserDropdown);
                             setShowMaskDropdown(false);
+                            setShowColorDropdown(false);
+                            setShowBrushDropdown(false);
+                            setShowZoomDropdown(false);
                         }}
                         title="Eraser Tools"
                     >
