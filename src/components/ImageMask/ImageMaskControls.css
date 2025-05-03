@@ -306,6 +306,13 @@
     gap: 8px;
 }
 
+.dropdown-content button .button-content {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+}
+
 .dropdown-content button:hover {
     background-color: #f0f0f0;
 }
