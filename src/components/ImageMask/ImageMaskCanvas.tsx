@@ -135,6 +135,32 @@ const ImageMaskCanvas = forwardRef<ImageMaskCanvasRef, ImageMaskProps>((props, r
         ctx.clearRect(0, 0, width || 1024, height || 1024);
         // Draw the previous state
         ctx.drawImage(img, 0, 0);
+        
+        // Apply current opacity to the loaded state
+        const imageData = ctx.getImageData(0, 0, width || 1024, height || 1024);
+        const data = imageData.data;
+
+        // Extract RGB values from the mask color
+        const rgbMatch = maskColor.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
+        if (rgbMatch) {
+          const [_, r, g, b] = rgbMatch;
+          
+          // Update the alpha channel for all non-transparent pixels
+          for (let i = 3; i < data.length; i += 4) {
+            if (data[i] > 0) {  // If pixel is not transparent
+              // Set the RGB values to match the mask color
+              data[i-3] = parseInt(r);
+              data[i-2] = parseInt(g);
+              data[i-1] = parseInt(b);
+              // Set the alpha to the current opacity, but never to 0
+              data[i] = Math.max(1, Math.round(currentOpacity * 255));
+            }
+          }
+          
+          // Put the modified data back
+          ctx.putImageData(imageData, 0, 0);
+        }
+        
         // Update the mask image
         updateMaskImage();
       }
@@ -225,10 +251,9 @@ const ImageMaskCanvas = forwardRef<ImageMaskCanvasRef, ImageMaskProps>((props, r
     ctx.clearRect(0, 0, width || 1024, height || 1024);
     ctx.drawImage(tempCanvasRef.current, 0, 0);
 
-    // Update the mask image and save to history
+    // Update the mask image
     updateMaskImage();
-    saveToHistory();
-  }, [maskCanvas, brushSize, getMaskColorWithOpacity, updateMaskImage, saveToHistory, width, height]);
+  }, [maskCanvas, brushSize, getMaskColorWithOpacity, updateMaskImage, width, height]);
 
   const drawBoxOnMask = useCallback((box: BoxSelection, isEraser: boolean = false) => {
     if (!maskCanvas || !tempCanvasRef.current) return;
@@ -251,10 +276,9 @@ const ImageMaskCanvas = forwardRef<ImageMaskCanvasRef, ImageMaskProps>((props, r
       ctx.fillRect(box.x, box.y, box.width, box.height);
     }
 
-    // Update the mask image and save to history
+    // Update the mask image
     updateMaskImage();
-    saveToHistory();
-  }, [maskCanvas, getMaskColorWithOpacity, updateMaskImage, saveToHistory]);
+  }, [maskCanvas, getMaskColorWithOpacity, updateMaskImage]);
 
   const drawPolygonOnMask = useCallback((points: Point[]) => {
     if (!maskCanvas || !tempCanvasRef.current) return;
@@ -284,10 +308,9 @@ const ImageMaskCanvas = forwardRef<ImageMaskCanvasRef, ImageMaskProps>((props, r
     ctx.clearRect(0, 0, width || 1024, height || 1024);
     ctx.drawImage(tempCanvasRef.current, 0, 0);
 
-    // Update the mask image and save to history
+    // Update the mask image
     updateMaskImage();
-    saveToHistory();
-  }, [maskCanvas, getMaskColorWithOpacity, updateMaskImage, saveToHistory, width, height]);
+  }, [maskCanvas, getMaskColorWithOpacity, updateMaskImage, width, height]);
 
   const handleMouseMove = useCallback((e: Konva.KonvaEventObject<MouseEvent>) => {
     const stage = e.target.getStage();
@@ -393,6 +416,7 @@ const ImageMaskCanvas = forwardRef<ImageMaskCanvasRef, ImageMaskProps>((props, r
           height: Math.min(height || 1024 - currentBox.y, Math.max(0, currentBox.height))
         };
         drawBoxOnMask(clampedBox, isEraser);
+        saveToHistory();
       }
     } else if (drawingPathRef.current.length > 1) {
       // Clamp the last point to image boundaries
@@ -403,6 +427,7 @@ const ImageMaskCanvas = forwardRef<ImageMaskCanvasRef, ImageMaskProps>((props, r
       };
       const clampedPath = [...drawingPathRef.current.slice(0, -1), clampedPoint];
       drawOnMask(clampedPath, isEraser);
+      saveToHistory();
     }
 
     // Clean up
@@ -411,7 +436,7 @@ const ImageMaskCanvas = forwardRef<ImageMaskCanvasRef, ImageMaskProps>((props, r
     setCurrentPath([]);
     setCurrentBox(null);
     setStartPoint(null);
-  }, [isDrawing, props.toolMode, currentBox, width, height, drawOnMask, drawBoxOnMask]);
+  }, [isDrawing, props.toolMode, currentBox, width, height, drawOnMask, drawBoxOnMask, saveToHistory]);
 
   const clearMask = () => {
     if (!maskCanvas || !tempCanvas) return;
@@ -592,6 +617,40 @@ const ImageMaskCanvas = forwardRef<ImageMaskCanvasRef, ImageMaskProps>((props, r
     props.onZoomChange?.(Math.round(boundedScale * 100));
   };
 
+  const setOpacity = useCallback((opacity: number) => {
+    setCurrentOpacity(opacity);
+    if (!maskCanvas) return;
+
+    const ctx = maskCanvas.getContext('2d');
+    if (!ctx) return;
+
+    // Get the current mask data
+    const imageData = ctx.getImageData(0, 0, width || 1024, height || 1024);
+    const data = imageData.data;
+
+    // Extract RGB values from the mask color
+    const rgbMatch = maskColor.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
+    if (!rgbMatch) return;
+    
+    const [_, r, g, b] = rgbMatch;
+
+    // Update the alpha channel for all non-transparent pixels
+    for (let i = 3; i < data.length; i += 4) {
+      if (data[i] > 0) {  // If pixel is not transparent
+        // Set the RGB values to match the mask color
+        data[i-3] = parseInt(r);
+        data[i-2] = parseInt(g);
+        data[i-1] = parseInt(b);
+        // Set the alpha to the current opacity, but never to 0
+        data[i] = Math.max(1, Math.round(opacity * 255));
+      }
+    }
+
+    // Put the modified data back
+    ctx.putImageData(imageData, 0, 0);
+    updateMaskImage();
+  }, [maskCanvas, maskColor, width, height, updateMaskImage]);
+
   useImperativeHandle(ref, () => ({
     getMaskData: () => maskCanvas?.toDataURL() || null,
     clearMask,
@@ -604,9 +663,7 @@ const ImageMaskCanvas = forwardRef<ImageMaskCanvasRef, ImageMaskProps>((props, r
       setMaskColor(color);
       updateMaskColor(color);
     },
-    setOpacity: (opacity: number) => {
-      setCurrentOpacity(opacity);
-    },
+    setOpacity: setOpacity,
     setBrushSize: (size: number) => {
       setBrushSize(size);
     },
