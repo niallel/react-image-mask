@@ -26,6 +26,7 @@ const ImageMaskCanvas = forwardRef<ImageMaskCanvasRef, ImageMaskProps>((props, r
   const [isDrawingPolygon, setIsDrawingPolygon] = useState(false);
   const [tempPolygonPoint, setTempPolygonPoint] = useState<Point | null>(null);
 
+  const { src, width, height, onZoomChange, toolMode, onHistoryChange } = props;
   const stageRef = useRef<Konva.Stage>(null);
   const layerRef = useRef<Konva.Layer>(null);
   const drawingPathRef = useRef<Point[]>([]);
@@ -42,18 +43,18 @@ const ImageMaskCanvas = forwardRef<ImageMaskCanvasRef, ImageMaskProps>((props, r
 
   useEffect(() => {
     const img = new window.Image();
-    img.src = props.src;
+    img.src = src;
     img.onload = () => {
       console.log('Image loaded with dimensions:', img.width, 'x', img.height);
       setImage(img);
       // Send initial zoom value when image is loaded
-      props.onZoomChange?.(Math.round(scale * 100));
+      onZoomChange?.(Math.round(scale * 100));
     };
 
     // Initialize mask canvas
     const canvas = document.createElement('canvas');
-    canvas.width = props.width || 1024;
-    canvas.height = props.height || 1024;
+    canvas.width = width || 1024;
+    canvas.height = height || 1024;
     const ctx = canvas.getContext('2d');
     if (ctx) {
       ctx.fillStyle = 'rgba(0, 0, 0, 0)';
@@ -79,18 +80,18 @@ const ImageMaskCanvas = forwardRef<ImageMaskCanvasRef, ImageMaskProps>((props, r
     };
     setHistory([initialState]);
     setHistoryIndex(0);
-  }, [props.src, props.width, props.height]);
+  }, [src, width, height, scale, onZoomChange]);
 
   // Initialize temporary canvas for drawing operations
   useEffect(() => {
     const canvas = document.createElement('canvas');
-    canvas.width = props.width || 1024;
-    canvas.height = props.height || 1024;
+    canvas.width = width || 1024;
+    canvas.height = height || 1024;
     tempCanvasRef.current = canvas;
     return () => {
       tempCanvasRef.current = null;
     };
-  }, [props.width, props.height]);
+  }, [width, height]);
 
   const updateMaskImage = useCallback(() => {
     if (!maskCanvas) return;
@@ -107,7 +108,7 @@ const ImageMaskCanvas = forwardRef<ImageMaskCanvasRef, ImageMaskProps>((props, r
 
     const newState: HistoryState = {
       canvasData: maskCanvas.toDataURL(),
-      toolMode: props.toolMode
+      toolMode: toolMode
     };
 
     // If we're not at the end of history, remove future states
@@ -117,8 +118,8 @@ const ImageMaskCanvas = forwardRef<ImageMaskCanvasRef, ImageMaskProps>((props, r
     setHistoryIndex(newHistory.length - 1);
     
     // Emit history change event - enable undo if we have more than one state
-    props.onHistoryChange?.(newHistory.length > 1, false);
-  }, [maskCanvas, history, historyIndex, props.toolMode, props.onHistoryChange]);
+    onHistoryChange?.(newHistory.length > 1, false);
+  }, [maskCanvas, history, historyIndex, toolMode, onHistoryChange]);
 
   const loadStateFromHistory = (index: number) => {
     if (!maskCanvas || index < 0 || index >= history.length) return;
@@ -130,7 +131,7 @@ const ImageMaskCanvas = forwardRef<ImageMaskCanvasRef, ImageMaskProps>((props, r
       const ctx = maskCanvas.getContext('2d');
       if (ctx) {
         // Clear the canvas
-        ctx.clearRect(0, 0, props.width || 1024, props.height || 1024);
+        ctx.clearRect(0, 0, width || 1024, height || 1024);
         // Draw the previous state
         ctx.drawImage(img, 0, 0);
         // Update the mask image
@@ -144,7 +145,7 @@ const ImageMaskCanvas = forwardRef<ImageMaskCanvasRef, ImageMaskProps>((props, r
       const newIndex = historyIndex - 1;
       loadStateFromHistory(newIndex);
       setHistoryIndex(newIndex);
-      props.onHistoryChange?.(newIndex > 0, true);
+      onHistoryChange?.(newIndex > 0, true);
     }
   };
 
@@ -153,7 +154,7 @@ const ImageMaskCanvas = forwardRef<ImageMaskCanvasRef, ImageMaskProps>((props, r
       const newIndex = historyIndex + 1;
       loadStateFromHistory(newIndex);
       setHistoryIndex(newIndex);
-      props.onHistoryChange?.(true, newIndex < history.length - 1);
+      onHistoryChange?.(true, newIndex < history.length - 1);
     }
   };
 
@@ -183,7 +184,7 @@ const ImageMaskCanvas = forwardRef<ImageMaskCanvasRef, ImageMaskProps>((props, r
     if (points.length < 2) return;
 
     // Clear the temporary canvas
-    tempCtx.clearRect(0, 0, props.width || 1024, props.height || 1024);
+    tempCtx.clearRect(0, 0, width || 1024, height || 1024);
     
     // Copy the current mask state to the temporary canvas
     tempCtx.drawImage(maskCanvas, 0, 0);
@@ -220,13 +221,13 @@ const ImageMaskCanvas = forwardRef<ImageMaskCanvasRef, ImageMaskProps>((props, r
     tempCtx.globalCompositeOperation = 'source-over';
 
     // Copy the result back to the main canvas
-    ctx.clearRect(0, 0, props.width || 1024, props.height || 1024);
+    ctx.clearRect(0, 0, width || 1024, height || 1024);
     ctx.drawImage(tempCanvasRef.current, 0, 0);
 
     // Update the mask image and save to history
     updateMaskImage();
     saveToHistory();
-  }, [maskCanvas, brushSize, getMaskColorWithOpacity, updateMaskImage, saveToHistory, props.width, props.height]);
+  }, [maskCanvas, brushSize, getMaskColorWithOpacity, updateMaskImage, saveToHistory, width, height]);
 
   const drawBoxOnMask = useCallback((box: BoxSelection, isEraser: boolean = false) => {
     if (!maskCanvas || !tempCanvasRef.current) return;
@@ -262,7 +263,7 @@ const ImageMaskCanvas = forwardRef<ImageMaskCanvasRef, ImageMaskProps>((props, r
     if (points.length < 3) return;
 
     // Clear the temporary canvas
-    tempCtx.clearRect(0, 0, props.width || 1024, props.height || 1024);
+    tempCtx.clearRect(0, 0, width || 1024, height || 1024);
     
     // Copy the current mask state to the temporary canvas
     tempCtx.drawImage(maskCanvas, 0, 0);
@@ -279,13 +280,13 @@ const ImageMaskCanvas = forwardRef<ImageMaskCanvasRef, ImageMaskProps>((props, r
     tempCtx.fill();
 
     // Copy the result back to the main canvas
-    ctx.clearRect(0, 0, props.width || 1024, props.height || 1024);
+    ctx.clearRect(0, 0, width || 1024, height || 1024);
     ctx.drawImage(tempCanvasRef.current, 0, 0);
 
     // Update the mask image and save to history
     updateMaskImage();
     saveToHistory();
-  }, [maskCanvas, getMaskColorWithOpacity, updateMaskImage, saveToHistory, props.width, props.height]);
+  }, [maskCanvas, getMaskColorWithOpacity, updateMaskImage, saveToHistory, width, height]);
 
   const handleMouseMove = useCallback((e: Konva.KonvaEventObject<MouseEvent>) => {
     const stage = e.target.getStage();
@@ -385,10 +386,10 @@ const ImageMaskCanvas = forwardRef<ImageMaskCanvasRef, ImageMaskProps>((props, r
       if (currentBox) {
         // Clamp box coordinates to image boundaries
         const clampedBox = {
-          x: Math.max(0, Math.min(currentBox.x, props.width || 1024)),
-          y: Math.max(0, Math.min(currentBox.y, props.height || 1024)),
-          width: Math.min(props.width || 1024 - currentBox.x, Math.max(0, currentBox.width)),
-          height: Math.min(props.height || 1024 - currentBox.y, Math.max(0, currentBox.height))
+          x: Math.max(0, Math.min(currentBox.x, width || 1024)),
+          y: Math.max(0, Math.min(currentBox.y, height || 1024)),
+          width: Math.min(width || 1024 - currentBox.x, Math.max(0, currentBox.width)),
+          height: Math.min(height || 1024 - currentBox.y, Math.max(0, currentBox.height))
         };
         drawBoxOnMask(clampedBox, isEraser);
       }
@@ -396,8 +397,8 @@ const ImageMaskCanvas = forwardRef<ImageMaskCanvasRef, ImageMaskProps>((props, r
       // Clamp the last point to image boundaries
       const lastPoint = drawingPathRef.current[drawingPathRef.current.length - 1];
       const clampedPoint = {
-        x: Math.max(0, Math.min(lastPoint.x, props.width || 1024)),
-        y: Math.max(0, Math.min(lastPoint.y, props.height || 1024))
+        x: Math.max(0, Math.min(lastPoint.x, width || 1024)),
+        y: Math.max(0, Math.min(lastPoint.y, height || 1024))
       };
       const clampedPath = [...drawingPathRef.current.slice(0, -1), clampedPoint];
       drawOnMask(clampedPath, isEraser);
@@ -409,7 +410,7 @@ const ImageMaskCanvas = forwardRef<ImageMaskCanvasRef, ImageMaskProps>((props, r
     setCurrentPath([]);
     setCurrentBox(null);
     setStartPoint(null);
-  }, [isDrawing, props.toolMode, currentBox, props.width, props.height, drawOnMask, drawBoxOnMask]);
+  }, [isDrawing, props.toolMode, currentBox, width, height, drawOnMask, drawBoxOnMask]);
 
   const clearMask = () => {
     if (!maskCanvas || !tempCanvas) return;
@@ -419,14 +420,14 @@ const ImageMaskCanvas = forwardRef<ImageMaskCanvasRef, ImageMaskProps>((props, r
     if (!ctx || !tempCtx) return;
 
     // Clear both canvases
-    ctx.clearRect(0, 0, props.width || 1024, props.height || 1024);
-    tempCtx.clearRect(0, 0, props.width || 1024, props.height || 1024);
+    ctx.clearRect(0, 0, width || 1024, height || 1024);
+    tempCtx.clearRect(0, 0, width || 1024, height || 1024);
     
     // Reset the canvases to transparent
     ctx.fillStyle = 'rgba(0, 0, 0, 0)';
-    ctx.fillRect(0, 0, props.width || 1024, props.height || 1024);
+    ctx.fillRect(0, 0, width || 1024, height || 1024);
     tempCtx.fillStyle = 'rgba(0, 0, 0, 0)';
-    tempCtx.fillRect(0, 0, props.width || 1024, props.height || 1024);
+    tempCtx.fillRect(0, 0, width || 1024, height || 1024);
     
     // Update the mask image
     updateMaskImage();
@@ -480,7 +481,7 @@ const ImageMaskCanvas = forwardRef<ImageMaskCanvasRef, ImageMaskProps>((props, r
     if (!ctx) return;
 
     // Get the current mask data
-    const imageData = ctx.getImageData(0, 0, props.width || 1024, props.height || 1024);
+    const imageData = ctx.getImageData(0, 0, width || 1024, height || 1024);
     const data = imageData.data;
 
     // Extract RGB values from the mask color
@@ -514,7 +515,7 @@ const ImageMaskCanvas = forwardRef<ImageMaskCanvasRef, ImageMaskProps>((props, r
     if (!ctx) return;
 
     // Get the current mask data
-    const imageData = ctx.getImageData(0, 0, props.width || 1024, props.height || 1024);
+    const imageData = ctx.getImageData(0, 0, width || 1024, height || 1024);
     const data = imageData.data;
 
     // Extract RGB values from the new color
@@ -624,8 +625,8 @@ const ImageMaskCanvas = forwardRef<ImageMaskCanvasRef, ImageMaskProps>((props, r
       </div>
       <Stage
         ref={stageRef}
-        width={props.width || 1024}
-        height={props.height || 1024}
+        width={width || 1024}
+        height={height || 1024}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
@@ -653,15 +654,15 @@ const ImageMaskCanvas = forwardRef<ImageMaskCanvasRef, ImageMaskProps>((props, r
           {image && (
             <Image
               image={image}
-              width={props.width || 1024}
-              height={props.height || 1024}
+              width={width || 1024}
+              height={height || 1024}
             />
           )}
           {maskImage && (
             <Image
               image={maskImage}
-              width={props.width || 1024}
-              height={props.height || 1024}
+              width={width || 1024}
+              height={height || 1024}
             />
           )}
           {props.toolMode === 'mask-polygon' && polygonPoints.length > 0 && (
