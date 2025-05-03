@@ -547,6 +547,15 @@ const ImageMaskCanvas = forwardRef<ImageMaskCanvasRef, ImageMaskProps>((props, r
     updateMaskOpacity();
   }, [currentOpacity]);
 
+  // Reset polygon state when tool mode changes
+  useEffect(() => {
+    if (props.toolMode !== 'mask-polygon') {
+      setIsDrawingPolygon(false);
+      setPolygonPoints([]);
+      setTempPolygonPoint(null);
+    }
+  }, [props.toolMode]);
+
   // Clean up animation frame on unmount
   useEffect(() => {
     return () => {
