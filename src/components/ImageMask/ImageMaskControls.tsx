@@ -38,12 +38,16 @@ export const ImageMaskControls = ({setToolMode, toolMode, clearCanvas, currentZo
     const [showColorDropdown, setShowColorDropdown] = useState(false);
     const [showBrushDropdown, setShowBrushDropdown] = useState(false);
     const [showZoomDropdown, setShowZoomDropdown] = useState(false);
+    const [showMaskDropdown, setShowMaskDropdown] = useState(false);
+    const [showEraserDropdown, setShowEraserDropdown] = useState(false);
     const controlsRef = useRef<HTMLDivElement>(null);
 
     const closeAllDropdowns = () => {
         setShowColorDropdown(false);
         setShowBrushDropdown(false);
         setShowZoomDropdown(false);
+        setShowMaskDropdown(false);
+        setShowEraserDropdown(false);
     };
 
     useEffect(() => {
@@ -85,6 +89,16 @@ export const ImageMaskControls = ({setToolMode, toolMode, clearCanvas, currentZo
             setZoom(zoom);
         }
         setShowZoomDropdown(false);
+    };
+
+    const handleMaskToolSelect = (tool: 'freehand' | 'box' | 'polygon') => {
+        setToolMode(`mask-${tool}`);
+        setShowMaskDropdown(false);
+    };
+
+    const handleEraserToolSelect = (tool: 'freehand' | 'box') => {
+        setToolMode(`eraser-${tool}`);
+        setShowEraserDropdown(false);
     };
 
     return (
@@ -148,80 +162,82 @@ export const ImageMaskControls = ({setToolMode, toolMode, clearCanvas, currentZo
                     </div>
                 </button>
 
-                <button 
-                    className={toolMode === 'mask-freehand' ? 'active' : ''}
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        setToolMode('mask-freehand');
-                        closeAllDropdowns();
-                    }}
-                    title="Freehand Mask"
-                >
-                    <div className="button-content">
-                        <FontAwesomeIcon icon={faMarker} size="lg"/>
-                        <span>Draw</span>
-                    </div>
-                </button>
+                <div className="dropdown">
+                    <button 
+                        className={toolMode.startsWith('mask-') ? 'active' : ''}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            setShowMaskDropdown(!showMaskDropdown);
+                            setShowEraserDropdown(false);
+                        }}
+                        title="Mask Tools"
+                    >
+                        <div className="button-content">
+                            {toolMode === 'mask-freehand' && <FontAwesomeIcon icon={faMarker} size="lg"/>}
+                            {toolMode === 'mask-box' && <FontAwesomeIcon icon={faPenToSquare} size="lg"/>}
+                            {toolMode === 'mask-polygon' && <FontAwesomeIcon icon={faDrawPolygon} size="lg"/>}
+                            {!toolMode.startsWith('mask-') && <FontAwesomeIcon icon={faMarker} size="lg"/>}
+                            <span>Mask</span>
+                        </div>
+                    </button>
+                    {showMaskDropdown && (
+                        <div className="dropdown-content">
+                            <button onClick={() => handleMaskToolSelect('freehand')}>
+                                <div className="button-content">
+                                    <FontAwesomeIcon icon={faMarker} size="lg"/>
+                                    <span>Freehand</span>
+                                </div>
+                            </button>
+                            <button onClick={() => handleMaskToolSelect('box')}>
+                                <div className="button-content">
+                                    <FontAwesomeIcon icon={faPenToSquare} size="lg"/>
+                                    <span>Box</span>
+                                </div>
+                            </button>
+                            <button onClick={() => handleMaskToolSelect('polygon')}>
+                                <div className="button-content">
+                                    <FontAwesomeIcon icon={faDrawPolygon} size="lg"/>
+                                    <span>Polygon</span>
+                                </div>
+                            </button>
+                        </div>
+                    )}
+                </div>
 
-                <button 
-                    className={toolMode === 'mask-box' ? 'active' : ''}
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        setToolMode('mask-box');
-                        closeAllDropdowns();
-                    }}
-                    title="Box Mask"
-                >
-                    <div className="button-content">
-                        <FontAwesomeIcon icon={faPenToSquare} size="lg"/>
-                        <span>Box</span>
-                    </div>
-                </button>
-
-                <button 
-                    className={toolMode === 'mask-polygon' ? 'active' : ''}
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        setToolMode('mask-polygon');
-                        closeAllDropdowns();
-                    }}
-                    title="Polygon Mask"
-                >
-                    <div className="button-content">
-                        <FontAwesomeIcon icon={faDrawPolygon} size="lg"/>
-                        <span>Polygon</span>
-                    </div>
-                </button>
-
-                <button 
-                    className={toolMode === 'eraser-freehand' ? 'active' : ''}
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        setToolMode('eraser-freehand');
-                        closeAllDropdowns();
-                    }}
-                    title="Freehand Eraser"
-                >
-                    <div className="button-content">
-                        <FontAwesomeIcon icon={faEraser} size="lg"/>
-                        <span>Erase</span>
-                    </div>
-                </button>
-
-                <button 
-                    className={toolMode === 'eraser-box' ? 'active' : ''}
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        setToolMode('eraser-box');
-                        closeAllDropdowns();
-                    }}
-                    title="Box Eraser"
-                >
-                    <div className="button-content">
-                        <FontAwesomeIcon icon={faEraser} size="lg"/>
-                        <span>Box</span>
-                    </div>
-                </button>
+                <div className="dropdown">
+                    <button 
+                        className={toolMode.startsWith('eraser-') ? 'active' : ''}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            setShowEraserDropdown(!showEraserDropdown);
+                            setShowMaskDropdown(false);
+                        }}
+                        title="Eraser Tools"
+                    >
+                        <div className="button-content">
+                            {toolMode === 'eraser-freehand' && <FontAwesomeIcon icon={faEraser} size="lg"/>}
+                            {toolMode === 'eraser-box' && <FontAwesomeIcon icon={faPenToSquare} size="lg"/>}
+                            {!toolMode.startsWith('eraser-') && <FontAwesomeIcon icon={faEraser} size="lg"/>}
+                            <span>Eraser</span>
+                        </div>
+                    </button>
+                    {showEraserDropdown && (
+                        <div className="dropdown-content">
+                            <button onClick={() => handleEraserToolSelect('freehand')}>
+                                <div className="button-content">
+                                    <FontAwesomeIcon icon={faEraser} size="lg"/>
+                                    <span>Freehand</span>
+                                </div>
+                            </button>
+                            <button onClick={() => handleEraserToolSelect('box')}>
+                                <div className="button-content">
+                                    <FontAwesomeIcon icon={faPenToSquare} size="lg"/>
+                                    <span>Box</span>
+                                </div>
+                            </button>
+                        </div>
+                    )}
+                </div>
             </div>
 
             <div className="dropdown-container">

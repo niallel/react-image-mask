@@ -276,3 +276,36 @@
     align-items: center;
     gap: 0.25rem;
 }
+
+.dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.dropdown-content {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    background-color: white;
+    min-width: 120px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    border-radius: 4px;
+    z-index: 100;
+    margin-top: 4px;
+}
+
+.dropdown-content button {
+    width: 100%;
+    padding: 8px;
+    text-align: left;
+    border: none;
+    background: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.dropdown-content button:hover {
+    background-color: #f0f0f0;
+}
