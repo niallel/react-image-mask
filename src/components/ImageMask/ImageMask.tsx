@@ -38,12 +38,12 @@ const ImageMask = () => {
         canvasRef.current?.setMaskColor(color);
     }, []);
 
-    const handleOpacityChange = useCallback((opacity: number) => {
+    const setOpacity = useCallback((opacity: number) => {
         setCurrentOpacity(opacity);
         canvasRef.current?.setOpacity(opacity);
     }, []);
 
-    const handleBrushSizeChange = useCallback((size: number) => {
+    const setBrushSize = useCallback((size: number) => {
         setCurrentBrushSize(size);
         canvasRef.current?.setBrushSize(size);
     }, []);
@@ -61,16 +61,16 @@ const ImageMask = () => {
                 clearCanvas={clearMask}
                 currentZoom={currentZoom}
                 onResetZoom={handleResetZoom}
-                onUndo={() => canvasRef.current?.undo()}
-                onRedo={() => canvasRef.current?.redo()}
+                undo={() => canvasRef.current?.undo()}
+                redo={() => canvasRef.current?.redo()}
                 canUndo={canUndo}
                 canRedo={canRedo}
                 onDownloadMask={handleDownloadMask}
                 onMaskColorChange={handleMaskColorChange}
                 currentMaskColor={currentMaskColor}
-                onOpacityChange={handleOpacityChange}
+                setOpacity={setOpacity}
                 currentOpacity={currentOpacity}
-                onBrushSizeChange={handleBrushSizeChange}
+                setBrushSize={setBrushSize}
                 currentBrushSize={currentBrushSize}
                 onZoomChange={setCurrentZoom}
                 canvasRef={canvasRef}

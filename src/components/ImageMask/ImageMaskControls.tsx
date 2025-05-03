@@ -17,22 +17,22 @@ const colorOptions: ColorOption[] = [
 const brushSizes = [5, 10, 20, 30, 40, 50, 60];
 const zoomLevels = [100, 200, 300, 400, 500, 600, 700, 800, 900, 1000];
 
-export const ImageMaskControls = ({setToolMode, toolMode, clearCanvas, currentZoom, onResetZoom, onUndo, onRedo, canUndo, canRedo, onDownloadMask, onMaskColorChange, currentMaskColor, onOpacityChange, currentOpacity, onBrushSizeChange, currentBrushSize, onZoomChange, canvasRef}: {
+export const ImageMaskControls = ({setToolMode, toolMode, clearCanvas, currentZoom, onResetZoom, undo, redo, canUndo, canRedo, onDownloadMask, onMaskColorChange, currentMaskColor, setOpacity, currentOpacity, setBrushSize, currentBrushSize, onZoomChange, canvasRef}: {
     setToolMode: (toolMode: ToolMode) => void, 
     toolMode: ToolMode,
     clearCanvas?: () => void,
     currentZoom?: number,
     onResetZoom?: () => void,
-    onUndo?: () => void,
-    onRedo?: () => void,
+    undo?: () => void,
+    redo?: () => void,
     canUndo?: boolean,
     canRedo?: boolean,
     onDownloadMask?: () => void,
     onMaskColorChange?: (color: string) => void,
     currentMaskColor?: string,
-    onOpacityChange?: (opacity: number) => void,
+    setOpacity?: (opacity: number) => void,
     currentOpacity?: number,
-    onBrushSizeChange?: (size: number) => void,
+    setBrushSize?: (size: number) => void,
     currentBrushSize?: number,
     onZoomChange?: (zoom: number) => void,
     canvasRef: React.RefObject<ImageMaskCanvasRef | null>
@@ -103,11 +103,11 @@ export const ImageMaskControls = ({setToolMode, toolMode, clearCanvas, currentZo
             }}
         >
             <div className="action-buttons">
-                {onUndo && (
+                {undo && (
                     <button 
                         onClick={(e) => {
                             e.stopPropagation();
-                            onUndo();
+                            undo();
                             closeAllDropdowns();
                         }} 
                         disabled={!canUndo} 
@@ -119,11 +119,11 @@ export const ImageMaskControls = ({setToolMode, toolMode, clearCanvas, currentZo
                         </div>
                     </button>
                 )}
-                {onRedo && (
+                {redo && (
                     <button 
                         onClick={(e) => {
                             e.stopPropagation();
-                            onRedo();
+                            redo();
                             closeAllDropdowns();
                         }} 
                         disabled={!canRedo} 
@@ -252,7 +252,7 @@ export const ImageMaskControls = ({setToolMode, toolMode, clearCanvas, currentZo
                                 className={`brush-option ${currentBrushSize === size ? 'active' : ''}`}
                                 onClick={(e) => {
                                     e.stopPropagation();
-                                    onBrushSizeChange?.(size);
+                                    setBrushSize?.(size);
                                     setShowBrushDropdown(false);
                                 }}
                                 title={`${size}px`}
@@ -311,7 +311,7 @@ export const ImageMaskControls = ({setToolMode, toolMode, clearCanvas, currentZo
                         max="100"
                         value={currentOpacity ? currentOpacity * 100 : 50}
                         onChange={(e) => {
-                            onOpacityChange?.(Number(e.target.value) / 100);
+                            setOpacity?.(Number(e.target.value) / 100);
                             closeAllDropdowns();
                         }}
                         onMouseDown={(e) => {
