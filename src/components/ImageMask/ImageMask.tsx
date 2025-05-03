@@ -72,6 +72,8 @@ const ImageMask = () => {
                 currentOpacity={currentOpacity}
                 onBrushSizeChange={handleBrushSizeChange}
                 currentBrushSize={currentBrushSize}
+                onZoomChange={setCurrentZoom}
+                canvasRef={canvasRef}
             />
             <ImageMaskCanvas 
                 ref={canvasRef} 

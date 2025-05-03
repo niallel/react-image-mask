@@ -46,4 +46,5 @@ export interface ImageMaskCanvasRef {
   canUndo: boolean;
   canRedo: boolean;
   resetZoom: () => void;
+  setZoom: (zoomPercentage: number) => void;
 }

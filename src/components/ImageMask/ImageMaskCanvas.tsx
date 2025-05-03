@@ -2,18 +2,8 @@ import React, { useState, useRef, useEffect, useCallback, forwardRef, useImperat
 import { Stage, Layer, Image, Group, Line, Rect, Circle } from 'react-konva';
 import Konva from 'konva';
 import { downloadMask } from './utils/downloadMask';
-import { ToolMode, Point, BoxSelection, HistoryState, ImageMaskProps, ColorOption, ImageMaskCanvasRef } from './types';
+import { ToolMode, Point, BoxSelection, HistoryState, ImageMaskProps, ImageMaskCanvasRef } from './types';
 import './ImageMaskCanvas.css';
-
-const colorOptions: ColorOption[] = [
-  { name: 'Black', value: 'rgba(0, 0, 0, 1)' },
-  { name: 'White', value: 'rgba(255, 255, 255, 1)' },
-  { name: 'Red', value: 'rgba(255, 0, 0, 1)' },
-  { name: 'Green', value: 'rgba(0, 255, 0, 1)' },
-  { name: 'Blue', value: 'rgba(0, 0, 255, 1)' },
-  { name: 'Orange', value: 'rgba(255, 165, 0, 1)' },
-  { name: 'Pink', value: 'rgba(255, 192, 203, 1)' }
-];
 
 const ImageMaskCanvas = forwardRef<ImageMaskCanvasRef, ImageMaskProps>((props, ref) => {
   const [image, setImage] = useState<HTMLImageElement | null>(null);
@@ -40,12 +30,12 @@ const ImageMaskCanvas = forwardRef<ImageMaskCanvasRef, ImageMaskProps>((props, r
   const animationFrameRef = useRef<number | undefined>(undefined);
   const tempCanvasRef = useRef<HTMLCanvasElement | null>(null);
 
-  const getScaledPoint = (point: Point): Point => {
+  const getScaledPoint = useCallback((point: Point): Point => {
     return {
       x: (point.x - position.x) / scale,
       y: (point.y - position.y) / scale
     };
-  };
+  }, [position, scale]);
 
   useEffect(() => {
     const img = new window.Image();
@@ -495,6 +485,36 @@ const ImageMaskCanvas = forwardRef<ImageMaskCanvasRef, ImageMaskProps>((props, r
     };
   }, []);
 
+  const setZoom = (zoomPercentage: number) => {
+    const stage = stageRef.current;
+    if (!stage) return;
+
+    const oldScale = scale;
+    const newScale = zoomPercentage / 100;
+    const boundedScale = Math.min(Math.max(1, newScale), 10);
+
+    // Get the center of the visible area
+    const center = {
+      x: stage.width() / 2,
+      y: stage.height() / 2
+    };
+
+    // Calculate new position to keep the center point fixed
+    const mousePointTo = {
+      x: (center.x - position.x) / oldScale,
+      y: (center.y - position.y) / oldScale,
+    };
+
+    const newPosition = {
+      x: center.x - mousePointTo.x * boundedScale,
+      y: center.y - mousePointTo.y * boundedScale,
+    };
+
+    setScale(boundedScale);
+    setPosition(newPosition);
+    props.onZoomChange?.(Math.round(boundedScale * 100));
+  };
+
   useImperativeHandle(ref, () => ({
     getMaskData: () => maskCanvas?.toDataURL() || null,
     clearMask,
@@ -518,7 +538,8 @@ const ImageMaskCanvas = forwardRef<ImageMaskCanvasRef, ImageMaskProps>((props, r
     resetZoom: () => {
       setScale(1);
       setPosition({ x: 0, y: 0 });
-    }
+    },
+    setZoom: setZoom
   }));
 
   return (

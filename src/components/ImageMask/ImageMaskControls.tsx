@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { ToolMode, ColorOption } from "./types";
+import { ToolMode, ColorOption, ImageMaskCanvasRef } from "./types";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faArrowsUpDownLeftRight, faEraser, faMarker, faPenToSquare, faMagnifyingGlass, faRotateLeft, faRotateRight, faTrash, faCircleDown } from "@fortawesome/free-solid-svg-icons";
 import "./ImageMaskControls.css";
@@ -17,7 +17,7 @@ const colorOptions: ColorOption[] = [
 const brushSizes = [5, 10, 20, 30, 40, 50, 60];
 const zoomLevels = [100, 200, 300, 400, 500, 600, 700, 800, 900, 1000];
 
-export const ImageMaskControls = ({setToolMode, toolMode, clearCanvas, currentZoom, onResetZoom, onUndo, onRedo, canUndo, canRedo, onDownloadMask, onMaskColorChange, currentMaskColor, onOpacityChange, currentOpacity, onBrushSizeChange, currentBrushSize, onZoomChange}: {
+export const ImageMaskControls = ({setToolMode, toolMode, clearCanvas, currentZoom, onResetZoom, onUndo, onRedo, canUndo, canRedo, onDownloadMask, onMaskColorChange, currentMaskColor, onOpacityChange, currentOpacity, onBrushSizeChange, currentBrushSize, onZoomChange, canvasRef}: {
     setToolMode: (toolMode: ToolMode) => void, 
     toolMode: ToolMode,
     clearCanvas?: () => void,
@@ -34,7 +34,8 @@ export const ImageMaskControls = ({setToolMode, toolMode, clearCanvas, currentZo
     currentOpacity?: number,
     onBrushSizeChange?: (size: number) => void,
     currentBrushSize?: number,
-    onZoomChange?: (zoom: number) => void
+    onZoomChange?: (zoom: number) => void,
+    canvasRef: React.RefObject<ImageMaskCanvasRef | null>
 }) => {
     const [showColorDropdown, setShowColorDropdown] = useState(false);
     const [showBrushDropdown, setShowBrushDropdown] = useState(false);
@@ -82,14 +83,10 @@ export const ImageMaskControls = ({setToolMode, toolMode, clearCanvas, currentZo
     };
 
     const handleZoomChange = (zoom: number) => {
-        const stage = document.querySelector('.Stage');
-        if (stage) {
-            const scale = zoom / 100;
-            (stage as any).scale({ x: scale, y: scale });
-            // Update the zoom display
-            if (onZoomChange) {
-                onZoomChange(zoom);
-            }
+        if (onZoomChange) {
+            onZoomChange(zoom);
+            // Call setZoom directly on the canvas ref
+            canvasRef.current?.setZoom(zoom);
         }
         setShowZoomDropdown(false);
     };
@@ -219,36 +216,6 @@ export const ImageMaskControls = ({setToolMode, toolMode, clearCanvas, currentZo
             <div className="dropdown-container">
                 <button 
                     className="dropdown-button"
-                    onClick={handleColorClick}
-                    title="Color Options"
-                >
-                    <div className="button-content">
-                        <div className="current-color" style={{ backgroundColor: currentMaskColor }} />
-                        <span>Color</span>
-                    </div>
-                </button>
-                {showColorDropdown && (
-                    <div className="dropdown-menu color-dropdown">
-                        {colorOptions.map((color) => (
-                            <button
-                                key={color.name}
-                                className={`color-option ${currentMaskColor === color.value ? 'active' : ''}`}
-                                style={{ backgroundColor: color.value }}
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    onMaskColorChange?.(color.value);
-                                    setShowColorDropdown(false);
-                                }}
-                                title={color.name}
-                            />
-                        ))}
-                    </div>
-                )}
-            </div>
-
-            <div className="dropdown-container">
-                <button 
-                    className="dropdown-button"
                     onClick={handleBrushClick}
                     title="Brush Size"
                 >
@@ -286,6 +253,36 @@ export const ImageMaskControls = ({setToolMode, toolMode, clearCanvas, currentZo
                                     }}
                                 />
                             </button>
+                        ))}
+                    </div>
+                )}
+            </div>
+
+            <div className="dropdown-container">
+                <button 
+                    className="dropdown-button"
+                    onClick={handleColorClick}
+                    title="Color Options"
+                >
+                    <div className="button-content">
+                        <div className="current-color" style={{ backgroundColor: currentMaskColor }} />
+                        <span>Color</span>
+                    </div>
+                </button>
+                {showColorDropdown && (
+                    <div className="dropdown-menu color-dropdown">
+                        {colorOptions.map((color) => (
+                            <button
+                                key={color.name}
+                                className={`color-option ${currentMaskColor === color.value ? 'active' : ''}`}
+                                style={{ backgroundColor: color.value }}
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    onMaskColorChange?.(color.value);
+                                    setShowColorDropdown(false);
+                                }}
+                                title={color.name}
+                            />
                         ))}
                     </div>
                 )}
