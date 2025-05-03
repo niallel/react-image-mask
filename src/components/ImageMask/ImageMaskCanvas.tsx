@@ -17,6 +17,7 @@ const ImageMaskCanvas = forwardRef<ImageMaskCanvasRef, ImageMaskProps>((props, r
   const [history, setHistory] = useState<HistoryState[]>([]);
   const [historyIndex, setHistoryIndex] = useState<number>(-1);
   const [currentOpacity, setCurrentOpacity] = useState<number>(props.opacity || 0.5);
+  const prevOpacityRef = useRef<number>(props.opacity || 0.5);
   const [scale, setScale] = useState<number>(1);
   const [position, setPosition] = useState<Point>({ x: 0, y: 0 });
   const [maskColor, setMaskColor] = useState<string>('rgba(0, 0, 0, 1)');
@@ -545,8 +546,45 @@ const ImageMaskCanvas = forwardRef<ImageMaskCanvasRef, ImageMaskProps>((props, r
   };
 
   useEffect(() => {
-    updateMaskOpacity();
-  }, [currentOpacity]);
+    const updateMaskOpacity = () => {
+      if (!maskCanvas) return;
+
+      const ctx = maskCanvas.getContext('2d');
+      if (!ctx) return;
+
+      // Get the current mask data
+      const imageData = ctx.getImageData(0, 0, width || 1024, height || 1024);
+      const data = imageData.data;
+
+      // Extract RGB values from the mask color
+      const rgbMatch = maskColor.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
+      if (!rgbMatch) return;
+      
+      const [_, r, g, b] = rgbMatch;
+
+      // Update the alpha channel for all non-transparent pixels
+      for (let i = 3; i < data.length; i += 4) {
+        if (data[i] > 0) {  // If pixel is not transparent
+          // Set the RGB values to match the mask color
+          data[i-3] = parseInt(r);
+          data[i-2] = parseInt(g);
+          data[i-1] = parseInt(b);
+          // Set the alpha to the current opacity, but never to 0
+          data[i] = Math.max(1, Math.round(currentOpacity * 255));
+        }
+      }
+
+      // Put the modified data back
+      ctx.putImageData(imageData, 0, 0);
+      updateMaskImage();
+    };
+
+    // Only update if opacity has actually changed
+    if (maskCanvas && currentOpacity !== prevOpacityRef.current) {
+      updateMaskOpacity();
+      prevOpacityRef.current = currentOpacity;
+    }
+  }, [currentOpacity, maskCanvas, maskColor, width, height, updateMaskImage]);
 
   // Reset polygon state when tool mode changes
   useEffect(() => {
