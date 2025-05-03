@@ -17,7 +17,7 @@ const colorOptions: ColorOption[] = [
 const brushSizes = [5, 10, 20, 30, 40, 50, 60];
 const zoomLevels = [100, 200, 300, 400, 500, 600, 700, 800, 900, 1000];
 
-export const ImageMaskControls = ({setToolMode, toolMode, clearCanvas, currentZoom, onResetZoom, undo, redo, canUndo, canRedo, onDownloadMask, onMaskColorChange, currentMaskColor, setOpacity, currentOpacity, setBrushSize, currentBrushSize, onZoomChange, canvasRef}: {
+export const ImageMaskControls = ({setToolMode, toolMode, clearCanvas, currentZoom, onResetZoom, undo, redo, canUndo, canRedo, onDownloadMask, setMaskColor, currentMaskColor, setOpacity, currentOpacity, setBrushSize, currentBrushSize, onZoomChange, canvasRef}: {
     setToolMode: (toolMode: ToolMode) => void, 
     toolMode: ToolMode,
     clearCanvas?: () => void,
@@ -28,7 +28,7 @@ export const ImageMaskControls = ({setToolMode, toolMode, clearCanvas, currentZo
     canUndo?: boolean,
     canRedo?: boolean,
     onDownloadMask?: () => void,
-    onMaskColorChange?: (color: string) => void,
+    setMaskColor?: (color: string) => void,
     currentMaskColor?: string,
     setOpacity?: (opacity: number) => void,
     currentOpacity?: number,
@@ -293,7 +293,7 @@ export const ImageMaskControls = ({setToolMode, toolMode, clearCanvas, currentZo
                                 style={{ backgroundColor: color.value }}
                                 onClick={(e) => {
                                     e.stopPropagation();
-                                    onMaskColorChange?.(color.value);
+                                    setMaskColor?.(color.value);
                                     setShowColorDropdown(false);
                                 }}
                                 title={color.name}

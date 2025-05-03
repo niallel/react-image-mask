@@ -33,7 +33,7 @@ const ImageMask = () => {
         }
     }, []);
 
-    const handleMaskColorChange = useCallback((color: string) => {
+    const setMaskColor = useCallback((color: string) => {
         setCurrentMaskColor(color);
         canvasRef.current?.setMaskColor(color);
     }, []);
@@ -66,7 +66,7 @@ const ImageMask = () => {
                 canUndo={canUndo}
                 canRedo={canRedo}
                 onDownloadMask={handleDownloadMask}
-                onMaskColorChange={handleMaskColorChange}
+                setMaskColor={setMaskColor}
                 currentMaskColor={currentMaskColor}
                 setOpacity={setOpacity}
                 currentOpacity={currentOpacity}
