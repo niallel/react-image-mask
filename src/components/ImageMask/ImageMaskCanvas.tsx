@@ -678,17 +678,26 @@ const ImageMaskCanvas = forwardRef<ImageMaskCanvasRef, ImageMaskProps>((props, r
                 lineJoin="round"
                 closed={false}
               />
-              {polygonPoints.map((point, index) => (
-                <Circle
-                  key={index}
-                  x={point.x}
-                  y={point.y}
-                  radius={4}
-                  fill={getMaskColorWithOpacity()}
-                  stroke="white"
-                  strokeWidth={1}
-                />
-              ))}
+              {polygonPoints.map((point, index) => {
+                const isFirstPoint = index === 0;
+                const isNearFirstPoint = isFirstPoint && tempPolygonPoint && 
+                  Math.sqrt(
+                    Math.pow(tempPolygonPoint.x - point.x, 2) +
+                    Math.pow(tempPolygonPoint.y - point.y, 2)
+                  ) < 10;
+                
+                return (
+                  <Circle
+                    key={index}
+                    x={point.x}
+                    y={point.y}
+                    radius={isNearFirstPoint ? 8 : 4}
+                    fill={getMaskColorWithOpacity()}
+                    stroke="white"
+                    strokeWidth={1}
+                  />
+                );
+              })}
             </Group>
           )}
           {currentPath.length > 0 && (
