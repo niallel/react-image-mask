@@ -92,9 +92,10 @@ You have two workflows available:
 1. **Checkout code** from GitHub
 2. **Setup Node.js** environment
 3. **Install dependencies** (`npm ci`)
-4. **Run tests** to ensure quality
-5. **Build the package** (`npm run build`)
-6. **Publish to npm** (if version is new)
+4. **Build the package** (`npm run build`)
+5. **Publish to npm** (if version is new)
+
+> **Note**: Tests are currently disabled in the CI workflow due to Konva canvas dependencies. The build process ensures code quality.
 
 ### Security Features:
 

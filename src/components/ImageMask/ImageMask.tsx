@@ -54,7 +54,7 @@ const ImageMask = () => {
     }, []);
 
     return (
-        <div className="tool-mode">
+        <div className="tool-mode" data-testid="image-mask-container">
             <ImageMaskControls 
                 setToolMode={setToolMode} 
                 toolMode={toolMode}
