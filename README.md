@@ -1,46 +1,168 @@
-# Getting Started with Create React App
+# React Image Mask
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+A React component for creating image masks with drawing tools. Features include freehand drawing, box selection, polygon selection, eraser tools, and more.
 
-## Available Scripts
+## Installation
 
-In the project directory, you can run:
+```bash
+npm install react-image-mask
+```
 
-### `npm start`
+## Dependencies
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+This package has the following peer dependencies:
+- `react` >= 16.8.0
+- `react-dom` >= 16.8.0
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+## Usage
 
-### `npm test`
+### Basic Usage
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+```tsx
+import React from 'react';
+import { ImageMask } from 'react-image-mask';
 
-### `npm run build`
+function App() {
+  return (
+    <div>
+      <ImageMask />
+    </div>
+  );
+}
+```
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+### Advanced Usage with Custom Props
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+```tsx
+import React, { useRef } from 'react';
+import { ImageMask, ImageMaskCanvas, ImageMaskControls, ImageMaskCanvasRef } from 'react-image-mask';
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+function App() {
+  const canvasRef = useRef<ImageMaskCanvasRef>(null);
 
-### `npm run eject`
+  const handleDownload = () => {
+    const maskData = canvasRef.current?.getMaskData();
+    if (maskData) {
+      const link = document.createElement('a');
+      link.href = maskData;
+      link.download = 'mask.png';
+      link.click();
+    }
+  };
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+  return (
+    <div>
+      <ImageMaskCanvas
+        ref={canvasRef}
+        src="https://example.com/image.jpg"
+        toolMode="mask-freehand"
+        onZoomChange={(zoom) => console.log('Zoom changed:', zoom)}
+        onHistoryChange={(canUndo, canRedo) => console.log('History:', { canUndo, canRedo })}
+      />
+      <button onClick={handleDownload}>Download Mask</button>
+    </div>
+  );
+}
+```
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+## Components
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
+### ImageMask
 
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
+The main component that includes both the canvas and controls.
 
-## Learn More
+#### Props
+- All props are optional - the component works with sensible defaults
+- Includes an image source URL (defaults to a placeholder image)
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+### ImageMaskCanvas
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+The canvas component for image masking.
+
+#### Props
+- `src: string` - Image source URL
+- `toolMode: ToolMode` - Current tool mode
+- `onZoomChange?: (zoom: number) => void` - Zoom change callback
+- `onHistoryChange?: (canUndo: boolean, canRedo: boolean) => void` - History change callback
+
+### ImageMaskControls
+
+The controls component for tool selection and settings.
+
+#### Props
+- `setToolMode: (toolMode: ToolMode) => void` - Tool mode setter
+- `toolMode: ToolMode` - Current tool mode
+- `clearCanvas?: () => void` - Clear canvas function
+- `currentZoom?: number` - Current zoom level
+- `undo?: () => void` - Undo function
+- `redo?: () => void` - Redo function
+- `canUndo?: boolean` - Whether undo is available
+- `canRedo?: boolean` - Whether redo is available
+- `onDownloadMask?: () => void` - Download mask function
+- `setMaskColor?: (color: string) => void` - Set mask color function
+- `currentMaskColor?: string` - Current mask color
+- `setOpacity?: (opacity: number) => void` - Set opacity function
+- `currentOpacity?: number` - Current opacity
+- `setBrushSize?: (size: number) => void` - Set brush size function
+- `currentBrushSize?: number` - Current brush size
+- `setZoom?: (zoom: number) => void` - Set zoom function
+
+## Types
+
+### ToolMode
+
+```typescript
+type ToolMode = 'move' | 'mask-freehand' | 'mask-box' | 'mask-polygon' | 'eraser-freehand' | 'eraser-box' | 'clear';
+```
+
+### ImageMaskCanvasRef
+
+```typescript
+interface ImageMaskCanvasRef {
+  getMaskData: () => string | null;
+  clearMask: () => void;
+  undo: () => void;
+  redo: () => void;
+  setToolMode: (mode: ToolMode) => void;
+  setMaskColor: (color: string) => void;
+  setOpacity: (opacity: number) => void;
+  setBrushSize: (size: number) => void;
+  canUndo: boolean;
+  canRedo: boolean;
+  setZoom: (zoomPercentage: number) => void;
+}
+```
+
+## Features
+
+- **Multiple Drawing Tools**: Freehand, box selection, polygon selection
+- **Eraser Tools**: Freehand and box eraser
+- **Zoom Controls**: Zoom in/out with mouse wheel or controls
+- **History**: Undo/redo functionality
+- **Customizable**: Adjustable brush size, opacity, and colors
+- **Download**: Export mask as PNG
+- **TypeScript**: Full TypeScript support
+
+## Development
+
+To run the development environment:
+
+```bash
+npm run dev
+```
+
+To build the library:
+
+```bash
+npm run build
+```
+
+To run Storybook:
+
+```bash
+npm run storybook
+```
+
+## License
+
+MIT
