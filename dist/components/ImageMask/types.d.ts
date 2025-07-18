@@ -15,13 +15,25 @@ export interface HistoryState {
     toolMode: ToolMode;
 }
 export interface ImageMaskProps {
+    src?: string;
+    maskColor?: string;
+    width?: number;
+    height?: number;
+    opacity?: number;
+    brushSize?: number;
+    onMaskChange?: (maskData: string | null) => void;
+    onZoomChange?: (zoom: number) => void;
+    onHistoryChange?: (canUndo: boolean, canRedo: boolean) => void;
+    className?: string;
+}
+export interface ImageMaskCanvasProps {
     src: string;
     maskColor?: string;
     width?: number;
     height?: number;
     opacity?: number;
     toolMode: ToolMode;
-    ref?: React.RefObject<React.FC<ImageMaskProps>>;
+    ref?: React.RefObject<React.FC<ImageMaskCanvasProps>>;
     onZoomChange?: (zoom: number) => void;
     onHistoryChange?: (canUndo: boolean, canRedo: boolean) => void;
 }
@@ -41,5 +53,11 @@ export interface ImageMaskCanvasRef {
     canUndo: boolean;
     canRedo: boolean;
     setZoom: (zoomPercentage: number) => void;
+}
+export interface ImageMaskRef {
+    getMaskData: () => string | null;
+    clearMask: () => void;
+    undo: () => void;
+    redo: () => void;
 }
 //# sourceMappingURL=types.d.ts.map

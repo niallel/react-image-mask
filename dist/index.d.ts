@@ -1,9 +1,7 @@
 /// <reference types="react" />
+import * as react from 'react';
+import react__default from 'react';
 import * as react_jsx_runtime from 'react/jsx-runtime';
-import React$1 from 'react';
-
-declare const ImageMask: () => react_jsx_runtime.JSX.Element;
-//# sourceMappingURL=ImageMask.d.ts.map
 
 type ToolMode = 'move' | 'mask-freehand' | 'mask-box' | 'mask-polygon' | 'eraser-freehand' | 'eraser-box' | 'clear';
 interface Point {
@@ -21,13 +19,25 @@ interface HistoryState {
     toolMode: ToolMode;
 }
 interface ImageMaskProps {
+    src?: string;
+    maskColor?: string;
+    width?: number;
+    height?: number;
+    opacity?: number;
+    brushSize?: number;
+    onMaskChange?: (maskData: string | null) => void;
+    onZoomChange?: (zoom: number) => void;
+    onHistoryChange?: (canUndo: boolean, canRedo: boolean) => void;
+    className?: string;
+}
+interface ImageMaskCanvasProps {
     src: string;
     maskColor?: string;
     width?: number;
     height?: number;
     opacity?: number;
     toolMode: ToolMode;
-    ref?: React.RefObject<React.FC<ImageMaskProps>>;
+    ref?: React.RefObject<React.FC<ImageMaskCanvasProps>>;
     onZoomChange?: (zoom: number) => void;
     onHistoryChange?: (canUndo: boolean, canRedo: boolean) => void;
 }
@@ -48,8 +58,17 @@ interface ImageMaskCanvasRef {
     canRedo: boolean;
     setZoom: (zoomPercentage: number) => void;
 }
+interface ImageMaskRef {
+    getMaskData: () => string | null;
+    clearMask: () => void;
+    undo: () => void;
+    redo: () => void;
+}
 
-declare const ImageMaskCanvas: React$1.ForwardRefExoticComponent<Omit<ImageMaskProps, "ref"> & React$1.RefAttributes<ImageMaskCanvasRef>>;
+declare const ImageMask: react.ForwardRefExoticComponent<ImageMaskProps & react.RefAttributes<ImageMaskRef>>;
+//# sourceMappingURL=ImageMask.d.ts.map
+
+declare const ImageMaskCanvas: react__default.ForwardRefExoticComponent<Omit<ImageMaskCanvasProps, "ref"> & react__default.RefAttributes<ImageMaskCanvasRef>>;
 //# sourceMappingURL=ImageMaskCanvas.d.ts.map
 
 declare const ImageMaskControls: ({ setToolMode, toolMode, clearCanvas, currentZoom, undo, redo, canUndo, canRedo, onDownloadMask, setMaskColor, currentMaskColor, setOpacity, currentOpacity, setBrushSize, currentBrushSize, setZoom }: {
@@ -74,4 +93,4 @@ declare const ImageMaskControls: ({ setToolMode, toolMode, clearCanvas, currentZ
 declare const downloadMask: (maskCanvas: HTMLCanvasElement | null, width: number, height: number) => void;
 
 export { ImageMask, ImageMaskCanvas, ImageMaskControls, downloadMask };
-export type { BoxSelection, ColorOption, HistoryState, ImageMaskCanvasRef, ImageMaskProps, Point, ToolMode };
+export type { BoxSelection, ColorOption, HistoryState, ImageMaskCanvasProps, ImageMaskCanvasRef, ImageMaskProps, ImageMaskRef, Point, ToolMode };

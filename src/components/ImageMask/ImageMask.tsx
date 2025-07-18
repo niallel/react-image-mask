@@ -1,27 +1,64 @@
-import { useRef, useState, useCallback } from "react";
+import { useRef, useState, useCallback, useEffect, forwardRef, useImperativeHandle } from "react";
 import ImageMaskControls from "./ImageMaskControls"
-import { ToolMode } from "./types";
+import { ToolMode, ImageMaskProps, ImageMaskRef } from "./types";
 import ImageMaskCanvas from "./ImageMaskCanvas";
 import { ImageMaskCanvasRef } from "./types";
 
-const ImageMask = () => {
+const ImageMask = forwardRef<ImageMaskRef, ImageMaskProps>(({
+  src = "https://picsum.photos/1024/1024",
+  maskColor = 'rgba(0, 0, 0, 1)',
+  opacity = 0.5,
+  brushSize = 10,
+  onMaskChange,
+  onZoomChange,
+  onHistoryChange,
+  className = "tool-mode"
+}, ref) => {
     const canvasRef = useRef<ImageMaskCanvasRef>(null);
     const [toolMode, setToolMode] = useState<ToolMode>('mask-freehand');
     const [currentZoom, setCurrentZoom] = useState<number>(1);
     const [canUndo, setCanUndo] = useState<boolean>(false);
     const [canRedo, setCanRedo] = useState<boolean>(false);
-    const [currentMaskColor, setCurrentMaskColor] = useState<string>('rgba(0, 0, 0, 1)');
-    const [currentOpacity, setCurrentOpacity] = useState<number>(0.5);
-    const [currentBrushSize, setCurrentBrushSize] = useState<number>(10);
+    const [currentMaskColor, setCurrentMaskColor] = useState<string>(maskColor);
+    const [currentOpacity, setCurrentOpacity] = useState<number>(opacity);
+    const [currentBrushSize, setCurrentBrushSize] = useState<number>(brushSize);
+
+    // Expose methods through ref
+    useImperativeHandle(ref, () => ({
+      getMaskData: () => canvasRef.current?.getMaskData() || null,
+      clearMask: () => canvasRef.current?.clearMask(),
+      undo: () => canvasRef.current?.undo(),
+      redo: () => canvasRef.current?.redo(),
+    }));
 
     const clearMask = useCallback(() => {
         canvasRef.current?.clearMask();
-    }, []);
+        // Notify parent of mask change
+        if (onMaskChange) {
+            onMaskChange(null);
+        }
+    }, [onMaskChange]);
 
     const handleHistoryChange = useCallback((canUndo: boolean, canRedo: boolean) => {
         setCanUndo(canUndo);
         setCanRedo(canRedo);
-    }, []);
+        // Notify parent of history change
+        if (onHistoryChange) {
+            onHistoryChange(canUndo, canRedo);
+        }
+        // Notify parent of mask change
+        if (onMaskChange) {
+            const maskData = canvasRef.current?.getMaskData();
+            onMaskChange(maskData || null);
+        }
+    }, [onHistoryChange, onMaskChange]);
+
+    const handleZoomChange = useCallback((zoom: number) => {
+        setCurrentZoom(zoom);
+        if (onZoomChange) {
+            onZoomChange(zoom);
+        }
+    }, [onZoomChange]);
 
     const handleDownloadMask = useCallback(() => {
         const maskData = canvasRef.current?.getMaskData();
@@ -53,8 +90,24 @@ const ImageMask = () => {
         canvasRef.current?.setZoom(zoom);
     }, []);
 
+    // Update internal state when props change
+    useEffect(() => {
+        setCurrentMaskColor(maskColor);
+        canvasRef.current?.setMaskColor(maskColor);
+    }, [maskColor]);
+
+    useEffect(() => {
+        setCurrentOpacity(opacity);
+        canvasRef.current?.setOpacity(opacity);
+    }, [opacity]);
+
+    useEffect(() => {
+        setCurrentBrushSize(brushSize);
+        canvasRef.current?.setBrushSize(brushSize);
+    }, [brushSize]);
+
     return (
-        <div className="tool-mode" data-testid="image-mask-container">
+        <div className={className} data-testid="image-mask-container">
             <ImageMaskControls 
                 setToolMode={setToolMode} 
                 toolMode={toolMode}
@@ -75,13 +128,15 @@ const ImageMask = () => {
             />
             <ImageMaskCanvas 
                 ref={canvasRef} 
-                src="https://picsum.photos/1024/1024" 
+                src={src}
                 toolMode={toolMode}
-                onZoomChange={setCurrentZoom}
+                onZoomChange={handleZoomChange}
                 onHistoryChange={handleHistoryChange}
             />
         </div>
     )
-}
+});
+
+ImageMask.displayName = 'ImageMask';
 
 export default ImageMask;

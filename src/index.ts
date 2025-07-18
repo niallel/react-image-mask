@@ -10,8 +10,10 @@ export type {
   BoxSelection,
   HistoryState,
   ImageMaskProps,
+  ImageMaskCanvasProps,
   ColorOption,
-  ImageMaskCanvasRef
+  ImageMaskCanvasRef,
+  ImageMaskRef
 } from './components/ImageMask/types';
 
 // Export utilities

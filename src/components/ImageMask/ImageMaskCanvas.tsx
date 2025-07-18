@@ -2,10 +2,10 @@ import React, { useState, useRef, useEffect, useCallback, forwardRef, useImperat
 import { Stage, Layer, Image, Group, Line, Rect, Circle } from 'react-konva';
 import Konva from 'konva';
 import { downloadMask } from './utils/downloadMask';
-import { ToolMode, Point, BoxSelection, HistoryState, ImageMaskProps, ImageMaskCanvasRef } from './types';
+import { ToolMode, Point, BoxSelection, HistoryState, ImageMaskCanvasProps, ImageMaskCanvasRef } from './types';
 import './ImageMaskCanvas.css';
 
-const ImageMaskCanvas = forwardRef<ImageMaskCanvasRef, ImageMaskProps>((props, ref) => {
+const ImageMaskCanvas = forwardRef<ImageMaskCanvasRef, ImageMaskCanvasProps>((props, ref) => {
   const [image, setImage] = useState<HTMLImageElement | null>(null);
   const [isDrawing, setIsDrawing] = useState(false);
   const [startPoint, setStartPoint] = useState<Point | null>(null);

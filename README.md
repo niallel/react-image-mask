@@ -25,23 +25,59 @@ import { ImageMask } from 'react-image-mask';
 function App() {
   return (
     <div>
+      {/* Uses default placeholder image */}
       <ImageMask />
     </div>
   );
 }
 ```
 
-### Advanced Usage with Custom Props
+### With Custom Image and Mask Callback
+
+```tsx
+import React, { useState } from 'react';
+import { ImageMask } from 'react-image-mask';
+
+function App() {
+  const [maskData, setMaskData] = useState<string | null>(null);
+
+  const handleMaskChange = (newMaskData: string | null) => {
+    setMaskData(newMaskData);
+    console.log('Mask updated:', newMaskData);
+  };
+
+  return (
+    <div>
+      <ImageMask
+        src="https://example.com/your-image.jpg"
+        onMaskChange={handleMaskChange}
+        maskColor="rgba(255, 0, 0, 1)"
+        opacity={0.7}
+        brushSize={15}
+      />
+      
+      {maskData && (
+        <div>
+          <h3>Mask Preview:</h3>
+          <img src={maskData} alt="Generated mask" style={{ maxWidth: '200px' }} />
+        </div>
+      )}
+    </div>
+  );
+}
+```
+
+### Using Ref to Control the Component
 
 ```tsx
 import React, { useRef } from 'react';
-import { ImageMask, ImageMaskCanvas, ImageMaskControls, ImageMaskCanvasRef } from 'react-image-mask';
+import { ImageMask, ImageMaskRef } from 'react-image-mask';
 
 function App() {
-  const canvasRef = useRef<ImageMaskCanvasRef>(null);
+  const maskRef = useRef<ImageMaskRef>(null);
 
   const handleDownload = () => {
-    const maskData = canvasRef.current?.getMaskData();
+    const maskData = maskRef.current?.getMaskData();
     if (maskData) {
       const link = document.createElement('a');
       link.href = maskData;
@@ -50,16 +86,26 @@ function App() {
     }
   };
 
+  const handleClear = () => {
+    maskRef.current?.clearMask();
+  };
+
   return (
     <div>
-      <ImageMaskCanvas
-        ref={canvasRef}
+      <ImageMask
+        ref={maskRef}
         src="https://example.com/image.jpg"
-        toolMode="mask-freehand"
-        onZoomChange={(zoom) => console.log('Zoom changed:', zoom)}
+        onMaskChange={(maskData) => console.log('Mask changed:', maskData)}
+        onZoomChange={(zoom) => console.log('Zoom:', zoom)}
         onHistoryChange={(canUndo, canRedo) => console.log('History:', { canUndo, canRedo })}
       />
-      <button onClick={handleDownload}>Download Mask</button>
+      
+      <div>
+        <button onClick={handleDownload}>Download Mask</button>
+        <button onClick={handleClear}>Clear Mask</button>
+        <button onClick={() => maskRef.current?.undo()}>Undo</button>
+        <button onClick={() => maskRef.current?.redo()}>Redo</button>
+      </div>
     </div>
   );
 }
@@ -72,8 +118,15 @@ function App() {
 The main component that includes both the canvas and controls.
 
 #### Props
-- All props are optional - the component works with sensible defaults
-- Includes an image source URL (defaults to a placeholder image)
+- `src?: string` - Image source URL (defaults to a placeholder image)
+- `maskColor?: string` - Initial mask color (defaults to black)
+- `opacity?: number` - Initial opacity (defaults to 0.5)
+- `brushSize?: number` - Initial brush size (defaults to 10)
+- `onMaskChange?: (maskData: string | null) => void` - Callback when mask changes
+- `onZoomChange?: (zoom: number) => void` - Callback when zoom changes
+- `onHistoryChange?: (canUndo: boolean, canRedo: boolean) => void` - Callback when history changes
+- `className?: string` - Custom CSS class for the container
+- `ref?: React.Ref<ImageMaskRef>` - Ref to control the component programmatically
 
 ### ImageMaskCanvas
 
@@ -113,6 +166,17 @@ The controls component for tool selection and settings.
 
 ```typescript
 type ToolMode = 'move' | 'mask-freehand' | 'mask-box' | 'mask-polygon' | 'eraser-freehand' | 'eraser-box' | 'clear';
+```
+
+### ImageMaskRef
+
+```typescript
+interface ImageMaskRef {
+  getMaskData: () => string | null;
+  clearMask: () => void;
+  undo: () => void;
+  redo: () => void;
+}
 ```
 
 ### ImageMaskCanvasRef

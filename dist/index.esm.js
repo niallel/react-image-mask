@@ -47096,23 +47096,51 @@ var ImageMaskCanvas = forwardRef(function (props, ref) {
 });
 ImageMaskCanvas.displayName = 'ImageMaskCanvas';
 
-var ImageMask = function () {
+var ImageMask = forwardRef(function (_a, ref) {
+    var _b = _a.src, src = _b === void 0 ? "https://picsum.photos/1024/1024" : _b, _c = _a.maskColor, maskColor = _c === void 0 ? 'rgba(0, 0, 0, 1)' : _c, _d = _a.opacity, opacity = _d === void 0 ? 0.5 : _d, _e = _a.brushSize, brushSize = _e === void 0 ? 10 : _e, onMaskChange = _a.onMaskChange, onZoomChange = _a.onZoomChange, onHistoryChange = _a.onHistoryChange, _f = _a.className, className = _f === void 0 ? "tool-mode" : _f;
     var canvasRef = useRef(null);
-    var _a = useState('mask-freehand'), toolMode = _a[0], setToolMode = _a[1];
-    var _b = useState(1), currentZoom = _b[0], setCurrentZoom = _b[1];
-    var _c = useState(false), canUndo = _c[0], setCanUndo = _c[1];
-    var _d = useState(false), canRedo = _d[0], setCanRedo = _d[1];
-    var _e = useState('rgba(0, 0, 0, 1)'), currentMaskColor = _e[0], setCurrentMaskColor = _e[1];
-    var _f = useState(0.5), currentOpacity = _f[0], setCurrentOpacity = _f[1];
-    var _g = useState(10), currentBrushSize = _g[0], setCurrentBrushSize = _g[1];
+    var _g = useState('mask-freehand'), toolMode = _g[0], setToolMode = _g[1];
+    var _h = useState(1), currentZoom = _h[0], setCurrentZoom = _h[1];
+    var _j = useState(false), canUndo = _j[0], setCanUndo = _j[1];
+    var _k = useState(false), canRedo = _k[0], setCanRedo = _k[1];
+    var _l = useState(maskColor), currentMaskColor = _l[0], setCurrentMaskColor = _l[1];
+    var _m = useState(opacity), currentOpacity = _m[0], setCurrentOpacity = _m[1];
+    var _o = useState(brushSize), currentBrushSize = _o[0], setCurrentBrushSize = _o[1];
+    // Expose methods through ref
+    useImperativeHandle(ref, function () { return ({
+        getMaskData: function () { var _a; return ((_a = canvasRef.current) === null || _a === void 0 ? void 0 : _a.getMaskData()) || null; },
+        clearMask: function () { var _a; return (_a = canvasRef.current) === null || _a === void 0 ? void 0 : _a.clearMask(); },
+        undo: function () { var _a; return (_a = canvasRef.current) === null || _a === void 0 ? void 0 : _a.undo(); },
+        redo: function () { var _a; return (_a = canvasRef.current) === null || _a === void 0 ? void 0 : _a.redo(); },
+    }); });
     var clearMask = useCallback(function () {
         var _a;
         (_a = canvasRef.current) === null || _a === void 0 ? void 0 : _a.clearMask();
-    }, []);
+        // Notify parent of mask change
+        if (onMaskChange) {
+            onMaskChange(null);
+        }
+    }, [onMaskChange]);
     var handleHistoryChange = useCallback(function (canUndo, canRedo) {
+        var _a;
         setCanUndo(canUndo);
         setCanRedo(canRedo);
-    }, []);
+        // Notify parent of history change
+        if (onHistoryChange) {
+            onHistoryChange(canUndo, canRedo);
+        }
+        // Notify parent of mask change
+        if (onMaskChange) {
+            var maskData = (_a = canvasRef.current) === null || _a === void 0 ? void 0 : _a.getMaskData();
+            onMaskChange(maskData || null);
+        }
+    }, [onHistoryChange, onMaskChange]);
+    var handleZoomChange = useCallback(function (zoom) {
+        setCurrentZoom(zoom);
+        if (onZoomChange) {
+            onZoomChange(zoom);
+        }
+    }, [onZoomChange]);
     var handleDownloadMask = useCallback(function () {
         var _a;
         var maskData = (_a = canvasRef.current) === null || _a === void 0 ? void 0 : _a.getMaskData();
@@ -47143,8 +47171,25 @@ var ImageMask = function () {
         setCurrentZoom(zoom);
         (_a = canvasRef.current) === null || _a === void 0 ? void 0 : _a.setZoom(zoom);
     }, []);
-    return (jsxs("div", __assign({ className: "tool-mode", "data-testid": "image-mask-container" }, { children: [jsx(ImageMaskControls, { setToolMode: setToolMode, toolMode: toolMode, clearCanvas: clearMask, currentZoom: currentZoom, undo: function () { var _a; return (_a = canvasRef.current) === null || _a === void 0 ? void 0 : _a.undo(); }, redo: function () { var _a; return (_a = canvasRef.current) === null || _a === void 0 ? void 0 : _a.redo(); }, canUndo: canUndo, canRedo: canRedo, onDownloadMask: handleDownloadMask, setMaskColor: setMaskColor, currentMaskColor: currentMaskColor, setOpacity: setOpacity, currentOpacity: currentOpacity, setBrushSize: setBrushSize, currentBrushSize: currentBrushSize, setZoom: setZoom }), jsx(ImageMaskCanvas, { ref: canvasRef, src: "https://picsum.photos/1024/1024", toolMode: toolMode, onZoomChange: setCurrentZoom, onHistoryChange: handleHistoryChange })] })));
-};
+    // Update internal state when props change
+    useEffect(function () {
+        var _a;
+        setCurrentMaskColor(maskColor);
+        (_a = canvasRef.current) === null || _a === void 0 ? void 0 : _a.setMaskColor(maskColor);
+    }, [maskColor]);
+    useEffect(function () {
+        var _a;
+        setCurrentOpacity(opacity);
+        (_a = canvasRef.current) === null || _a === void 0 ? void 0 : _a.setOpacity(opacity);
+    }, [opacity]);
+    useEffect(function () {
+        var _a;
+        setCurrentBrushSize(brushSize);
+        (_a = canvasRef.current) === null || _a === void 0 ? void 0 : _a.setBrushSize(brushSize);
+    }, [brushSize]);
+    return (jsxs("div", __assign({ className: className, "data-testid": "image-mask-container" }, { children: [jsx(ImageMaskControls, { setToolMode: setToolMode, toolMode: toolMode, clearCanvas: clearMask, currentZoom: currentZoom, undo: function () { var _a; return (_a = canvasRef.current) === null || _a === void 0 ? void 0 : _a.undo(); }, redo: function () { var _a; return (_a = canvasRef.current) === null || _a === void 0 ? void 0 : _a.redo(); }, canUndo: canUndo, canRedo: canRedo, onDownloadMask: handleDownloadMask, setMaskColor: setMaskColor, currentMaskColor: currentMaskColor, setOpacity: setOpacity, currentOpacity: currentOpacity, setBrushSize: setBrushSize, currentBrushSize: currentBrushSize, setZoom: setZoom }), jsx(ImageMaskCanvas, { ref: canvasRef, src: src, toolMode: toolMode, onZoomChange: handleZoomChange, onHistoryChange: handleHistoryChange })] })));
+});
+ImageMask.displayName = 'ImageMask';
 
 var downloadMask = function (maskCanvas, width, height) {
     if (!maskCanvas)

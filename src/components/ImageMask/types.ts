@@ -17,14 +17,29 @@ export interface HistoryState {
   toolMode: ToolMode;
 }
 
+// Props for the main ImageMask component
 export interface ImageMaskProps {
+  src?: string;
+  maskColor?: string;
+  width?: number;
+  height?: number;
+  opacity?: number;
+  brushSize?: number;
+  onMaskChange?: (maskData: string | null) => void;
+  onZoomChange?: (zoom: number) => void;
+  onHistoryChange?: (canUndo: boolean, canRedo: boolean) => void;
+  className?: string;
+}
+
+// Props for the ImageMaskCanvas component
+export interface ImageMaskCanvasProps {
   src: string;
   maskColor?: string;
   width?: number;
   height?: number;
   opacity?: number;
   toolMode: ToolMode;
-  ref?: React.RefObject<React.FC<ImageMaskProps>>;
+  ref?: React.RefObject<React.FC<ImageMaskCanvasProps>>;
   onZoomChange?: (zoom: number) => void;
   onHistoryChange?: (canUndo: boolean, canRedo: boolean) => void;
 }
@@ -46,4 +61,11 @@ export interface ImageMaskCanvasRef {
   canUndo: boolean;
   canRedo: boolean;
   setZoom: (zoomPercentage: number) => void;
+}
+
+export interface ImageMaskRef {
+  getMaskData: () => string | null;
+  clearMask: () => void;
+  undo: () => void;
+  redo: () => void;
 }
