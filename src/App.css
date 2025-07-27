@@ -57,6 +57,31 @@
   outline-offset: 2px;
 }
 
+.download-mask-button {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  background-color: #61dafb;
+  color: #282c34;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.download-mask-button:hover {
+  background-color: #4fa8c7;
+}
+
+.download-mask-button:active {
+  background-color: #3d8ba8;
+}
+
+.download-mask-button:focus {
+  outline: 2px solid #61dafb;
+  outline-offset: 2px;
+}
+
 .image-mask-demo-container {
   border: 2px dashed rgba(255, 255, 255, 0.3);
   border-radius: 8px;
