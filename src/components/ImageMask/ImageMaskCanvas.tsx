@@ -571,22 +571,34 @@ const ImageMaskCanvas = forwardRef<ImageMaskCanvasRef, ImageMaskCanvasProps>((pr
 
     // Calculate new scale
     const newScale = e.evt.deltaY > 0 ? oldScale * 0.98 : oldScale * 1.02;
+    
     // Limit scale between 1 and 10
     const boundedScale = Math.min(Math.max(1, newScale), 10);
 
-    // Calculate new position to zoom towards mouse pointer
-    const mousePointTo = {
-      x: (pointer.x - position.x) / oldScale,
-      y: (pointer.y - position.y) / oldScale,
-    };
+    // If we're at minimum zoom (100%), center the image in the container
+    if (boundedScale === 1) {
+      const dimensions = getScaledDimensions();
+      const newPosition = {
+        x: (stage.width() - dimensions.width) / 2,
+        y: (stage.height() - dimensions.height) / 2,
+      };
+      setScale(boundedScale);
+      setPosition(newPosition);
+    } else {
+      // Calculate new position to zoom towards mouse pointer
+      const mousePointTo = {
+        x: (pointer.x - position.x) / oldScale,
+        y: (pointer.y - position.y) / oldScale,
+      };
 
-    const newPosition = {
-      x: pointer.x - mousePointTo.x * boundedScale,
-      y: pointer.y - mousePointTo.y * boundedScale,
-    };
+      const newPosition = {
+        x: pointer.x - mousePointTo.x * boundedScale,
+        y: pointer.y - mousePointTo.y * boundedScale,
+      };
 
-    setScale(boundedScale);
-    setPosition(newPosition);
+      setScale(boundedScale);
+      setPosition(newPosition);
+    }
     
     // Call the callback if provided, converting scale to percentage
     props.onZoomChange?.(Math.round(boundedScale * 100));
@@ -685,27 +697,41 @@ const ImageMaskCanvas = forwardRef<ImageMaskCanvasRef, ImageMaskCanvasProps>((pr
 
     const oldScale = scale;
     const newScale = zoomPercentage / 100;
+    
+    // Limit scale between 1 and 10
     const boundedScale = Math.min(Math.max(1, newScale), 10);
 
-    // Get the center of the visible area
-    const center = {
-      x: stage.width() / 2,
-      y: stage.height() / 2
-    };
+    // If we're at minimum zoom (100%), center the image in the container
+    if (boundedScale === 1) {
+      const dimensions = getScaledDimensions();
+      const newPosition = {
+        x: (stage.width() - dimensions.width) / 2,
+        y: (stage.height() - dimensions.height) / 2,
+      };
+      setScale(boundedScale);
+      setPosition(newPosition);
+    } else {
+      // Get the center of the visible area
+      const center = {
+        x: stage.width() / 2,
+        y: stage.height() / 2
+      };
 
-    // Calculate new position to keep the center point fixed
-    const mousePointTo = {
-      x: (center.x - position.x) / oldScale,
-      y: (center.y - position.y) / oldScale,
-    };
+      // Calculate new position to keep the center point fixed
+      const mousePointTo = {
+        x: (center.x - position.x) / oldScale,
+        y: (center.y - position.y) / oldScale,
+      };
 
-    const newPosition = {
-      x: center.x - mousePointTo.x * boundedScale,
-      y: center.y - mousePointTo.y * boundedScale,
-    };
+      const newPosition = {
+        x: center.x - mousePointTo.x * boundedScale,
+        y: center.y - mousePointTo.y * boundedScale,
+      };
 
-    setScale(boundedScale);
-    setPosition(newPosition);
+      setScale(boundedScale);
+      setPosition(newPosition);
+    }
+    
     props.onZoomChange?.(Math.round(boundedScale * 100));
   };
 
