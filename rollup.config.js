@@ -32,8 +32,7 @@ export default [
       }),
       commonjs(),
       typescript({
-        tsconfig: './tsconfig.json',
-        exclude: ['**/*.test.tsx', '**/*.test.ts', '**/*.stories.tsx']
+        tsconfig: './tsconfig.build.json'
       }),
       postcss({
         extract: true,
