@@ -17,6 +17,18 @@ export interface HistoryState {
   toolMode: ToolMode;
 }
 
+// Controls configuration interface
+export interface ControlsConfig {
+  showDownloadButton?: boolean;
+  showClearButton?: boolean;
+  showUndoRedo?: boolean;
+  showToolButtons?: boolean;
+  showBrushControls?: boolean;
+  showColorControls?: boolean;
+  showOpacityControls?: boolean;
+  showZoomControls?: boolean;
+}
+
 // Props for the main ImageMask component
 export interface ImageMaskProps {
   src?: string;
@@ -25,6 +37,7 @@ export interface ImageMaskProps {
   height?: number;
   opacity?: number;
   brushSize?: number;
+  controlsConfig?: ControlsConfig;
   onMaskChange?: (maskData: string | null) => void;
   onZoomChange?: (zoom: number) => void;
   onHistoryChange?: (canUndo: boolean, canRedo: boolean) => void;

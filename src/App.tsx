@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import ImageMask from './components/ImageMask/ImageMask';
-import { ImageMaskRef } from './components/ImageMask/types';
+import { ImageMaskRef, ControlsConfig } from './components/ImageMask/types';
 import './App.css';
 
 function App() {
@@ -10,6 +10,18 @@ function App() {
 
   // Generate size options from 200px to 1200px in 100px increments
   const sizeOptions = Array.from({ length: 11 }, (_, i) => 200 + i * 100);
+
+  // Configure which controls to show in the ImageMask component
+  const controlsConfig: ControlsConfig = {
+    showDownloadButton: false, // Hide the download button in ImageMaskControls
+    showClearButton: true,
+    showUndoRedo: true,
+    showToolButtons: true,
+    showBrushControls: true,
+    showColorControls: true,
+    showOpacityControls: true,
+    showZoomControls: true
+  };
 
   const handleDownloadMask = () => {
     const maskData = imageMaskRef.current?.getMaskData();
@@ -74,7 +86,7 @@ function App() {
             height: `${containerHeight}px`
           }}
         >
-          <ImageMask ref={imageMaskRef} />
+          <ImageMask ref={imageMaskRef} controlsConfig={controlsConfig} />
         </div>
       </header>
     </div>

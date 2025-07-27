@@ -1,6 +1,6 @@
 import { useRef, useState, useCallback, useEffect, forwardRef, useImperativeHandle } from "react";
 import ImageMaskControls from "./ImageMaskControls"
-import { ToolMode, ImageMaskProps, ImageMaskRef } from "./types";
+import { ToolMode, ImageMaskProps, ImageMaskRef, ControlsConfig } from "./types";
 import ImageMaskCanvas from "./ImageMaskCanvas";
 import { ImageMaskCanvasRef } from "./types";
 
@@ -9,6 +9,16 @@ const ImageMask = forwardRef<ImageMaskRef, ImageMaskProps>(({
   maskColor = 'rgba(0, 0, 0, 1)',
   opacity = 0.5,
   brushSize = 10,
+  controlsConfig = {
+    showDownloadButton: true,
+    showClearButton: true,
+    showUndoRedo: true,
+    showToolButtons: true,
+    showBrushControls: true,
+    showColorControls: true,
+    showOpacityControls: true,
+    showZoomControls: true
+  },
   onMaskChange,
   onZoomChange,
   onHistoryChange,
@@ -117,7 +127,7 @@ const ImageMask = forwardRef<ImageMaskRef, ImageMaskProps>(({
                 redo={() => canvasRef.current?.redo()}
                 canUndo={canUndo}
                 canRedo={canRedo}
-                onDownloadMask={handleDownloadMask}
+                onDownloadMask={controlsConfig.showDownloadButton ? handleDownloadMask : undefined}
                 setMaskColor={setMaskColor}
                 currentMaskColor={currentMaskColor}
                 setOpacity={setOpacity}
@@ -125,6 +135,7 @@ const ImageMask = forwardRef<ImageMaskRef, ImageMaskProps>(({
                 setBrushSize={setBrushSize}
                 currentBrushSize={currentBrushSize}
                 setZoom={setZoom}
+                controlsConfig={controlsConfig}
             />
             <ImageMaskCanvas 
                 ref={canvasRef} 
