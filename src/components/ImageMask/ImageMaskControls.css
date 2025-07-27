@@ -15,42 +15,59 @@
 .controls-bar {
     display: flex;
     align-items: center;
-    gap: 1rem;
-    padding: 0.5rem;
+    gap: var(--controls-gap, 1rem);
+    padding: var(--controls-padding, 0.5rem);
     background-color: #f5f5f5;
-    border-radius: 8px;
+    border-radius: 4px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    margin-bottom: 1rem;
+    margin-bottom: 0.5rem;
+    container-type: inline-size;
+    
+    /* Default sizing variables - very tight */
+    --controls-gap: 0.25rem;
+    --controls-padding: 0.2rem;
+    --button-min-width: 40px;
+    --button-padding: 0.2rem;
+    --text-size: 0.65rem;
+    --icon-scale: 0.85;
+    --button-gap: 0.2rem;
+    --color-size: 16px;
 }
 
 .tool-buttons {
     display: flex;
-    gap: 0.5rem;
+    gap: var(--button-gap);
 }
 
 .tool-buttons button,
 .dropdown-button,
 .action-buttons button {
-    min-width: 60px;
+    min-width: var(--button-min-width);
 }
 
 .button-content {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 0.25rem;
+    gap: calc(var(--button-gap) * 0.5);
 }
 
 .button-content span {
-    font-size: 0.75rem;
+    font-size: var(--text-size);
     text-align: center;
     color: #666;
     font-family: inherit;
     font-weight: normal;
+    transition: opacity 0.2s ease;
+}
+
+.button-content svg {
+    transform: scale(var(--icon-scale));
+    transition: transform 0.2s ease;
 }
 
 .tool-buttons button {
-    padding: 0.5rem;
+    padding: var(--button-padding);
     border: none;
     background: none;
     cursor: pointer;
@@ -76,8 +93,8 @@
 .dropdown-button {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    padding: 0.5rem;
+    gap: var(--button-gap);
+    padding: var(--button-padding);
     border: none;
     background: none;
     cursor: pointer;
@@ -92,15 +109,15 @@
 }
 
 .current-color {
-    width: 20px;
-    height: 20px;
+    width: var(--color-size);
+    height: var(--color-size);
     border-radius: 4px;
     border: 1px solid #ccc;
 }
 
 .current-brush {
     border-radius: 50%;
-    margin-left: 0.5rem;
+    margin-left: var(--button-gap);
 }
 
 .dropdown-menu {
@@ -198,21 +215,56 @@
 
 .action-buttons {
     display: flex;
-    gap: 0.5rem;
+    gap: calc(var(--button-gap) * 0.3); /* Much tighter spacing for grouped actions */
 }
 
 .action-buttons button {
-    padding: 0.5rem 1rem;
+    position: relative;
+    padding: var(--button-padding);
     border: none;
     background: none;
     color: #666;
-    border-radius: 4px;
+    border-radius: 2px;
     cursor: pointer;
     transition: all 0.2s ease;
+    min-width: var(--button-min-width);
+}
+
+/* First button in group - rounded left */
+.action-buttons button:first-child {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+/* Last button in group - rounded right */
+.action-buttons button:last-child {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+}
+
+/* Add subtle separator between grouped buttons */
+.action-buttons button:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 20%;
+    bottom: 20%;
+    width: 1px;
+    background-color: rgba(0, 0, 0, 0.15);
+}
+
+/* Middle buttons in group - no rounding */
+.action-buttons button:not(:first-child):not(:last-child) {
+    border-radius: 0;
+}
+
+/* Only child - keep all rounding */
+.action-buttons button:only-child {
+    border-radius: 2px;
 }
 
 .action-buttons button:hover {
-    background-color: #e0e0e0;
+    background-color: rgba(255, 255, 255, 0.8);
     color: #333;
 }
 
@@ -315,4 +367,106 @@
 
 .dropdown-content button:hover {
     background-color: #f0f0f0;
+}
+
+/* Responsive scaling based on container width */
+
+/* Medium size - scale down slightly */
+@container (max-width: 600px) {
+    .controls-bar {
+        --controls-gap: 0.2rem;
+        --controls-padding: 0.15rem;
+        --button-min-width: 36px;
+        --button-padding: 0.15rem;
+        --text-size: 0.6rem;
+        --icon-scale: 0.8;
+        --button-gap: 0.15rem;
+        --color-size: 14px;
+    }
+}
+
+/* Small size - scale down more */
+@container (max-width: 450px) {
+    .controls-bar {
+        --controls-gap: 0.15rem;
+        --controls-padding: 0.1rem;
+        --button-min-width: 32px;
+        --button-padding: 0.1rem;
+        --text-size: 0.55rem;
+        --icon-scale: 0.75;
+        --button-gap: 0.1rem;
+        --color-size: 12px;
+    }
+}
+
+/* Extra small size - hide text labels and scale down significantly */
+@container (max-width: 300px) {
+    .controls-bar {
+        --controls-gap: 0.1rem;
+        --controls-padding: 0.08rem;
+        --button-min-width: 28px;
+        --button-padding: 0.08rem;
+        --text-size: 0.5rem;
+        --icon-scale: 0.65;
+        --button-gap: 0.08rem;
+        --color-size: 10px;
+    }
+    
+    .button-content span {
+        display: none; /* Hide text labels on very small screens */
+    }
+    
+    .button-content {
+        flex-direction: row; /* Change to row layout without text */
+        justify-content: center;
+    }
+}
+
+/* Fallback for browsers that don't support container queries */
+@media (max-width: 600px) {
+    .controls-bar:not([style*="container-type"]) {
+        --controls-gap: 0.2rem;
+        --controls-padding: 0.15rem;
+        --button-min-width: 36px;
+        --button-padding: 0.15rem;
+        --text-size: 0.6rem;
+        --icon-scale: 0.8;
+        --button-gap: 0.15rem;
+        --color-size: 14px;
+    }
+}
+
+@media (max-width: 450px) {
+    .controls-bar:not([style*="container-type"]) {
+        --controls-gap: 0.15rem;
+        --controls-padding: 0.1rem;
+        --button-min-width: 32px;
+        --button-padding: 0.1rem;
+        --text-size: 0.55rem;
+        --icon-scale: 0.75;
+        --button-gap: 0.1rem;
+        --color-size: 12px;
+    }
+}
+
+@media (max-width: 300px) {
+    .controls-bar:not([style*="container-type"]) {
+        --controls-gap: 0.1rem;
+        --controls-padding: 0.08rem;
+        --button-min-width: 28px;
+        --button-padding: 0.08rem;
+        --text-size: 0.5rem;
+        --icon-scale: 0.65;
+        --button-gap: 0.08rem;
+        --color-size: 10px;
+    }
+    
+    .controls-bar:not([style*="container-type"]) .button-content span {
+        display: none;
+    }
+    
+    .controls-bar:not([style*="container-type"]) .button-content {
+        flex-direction: row;
+        justify-content: center;
+    }
 }
