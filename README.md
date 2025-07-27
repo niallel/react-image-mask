@@ -16,11 +16,20 @@ This package has the following peer dependencies:
 
 ## Usage
 
+### CSS Import
+
+**Important**: You need to import the CSS file for the component to display correctly:
+
+```tsx
+import 'react-image-mask/dist/index.css';
+```
+
 ### Basic Usage
 
 ```tsx
 import React from 'react';
 import { ImageMask } from 'react-image-mask';
+import 'react-image-mask/dist/index.css';
 
 function App() {
   return (
@@ -37,6 +46,7 @@ function App() {
 ```tsx
 import React, { useState } from 'react';
 import { ImageMask } from 'react-image-mask';
+import 'react-image-mask/dist/index.css';
 
 function App() {
   const [maskData, setMaskData] = useState<string | null>(null);
@@ -72,6 +82,7 @@ function App() {
 ```tsx
 import React, { useRef } from 'react';
 import { ImageMask, ImageMaskRef } from 'react-image-mask';
+import 'react-image-mask/dist/index.css';
 
 function App() {
   const maskRef = useRef<ImageMaskRef>(null);
@@ -116,6 +127,7 @@ function App() {
 ```tsx
 import React from 'react';
 import { ImageMask, ControlsConfig } from 'react-image-mask';
+import 'react-image-mask/dist/index.css';
 
 function App() {
   // Configure which controls to show
@@ -185,6 +197,7 @@ The main component that includes both the canvas and controls. This is the prima
 ```tsx
 import React, { useRef, useState } from 'react';
 import { ImageMask, ImageMaskRef, ControlsConfig } from 'react-image-mask';
+import 'react-image-mask/dist/index.css';
 
 function App() {
   const maskRef = useRef<ImageMaskRef>(null);
@@ -262,6 +275,7 @@ The canvas component for image masking. This is the low-level component that han
 ```tsx
 import React, { useRef, useState } from 'react';
 import { ImageMaskCanvas, ImageMaskCanvasRef, ToolMode } from 'react-image-mask';
+import 'react-image-mask/dist/index.css';
 
 function App() {
   const canvasRef = useRef<ImageMaskCanvasRef>(null);
@@ -367,6 +381,7 @@ The controls component for tool selection and settings. This provides the UI for
 ```tsx
 import React, { useState } from 'react';
 import { ImageMaskControls, ToolMode, ControlsConfig } from 'react-image-mask';
+import 'react-image-mask/dist/index.css';
 
 function App() {
   const [toolMode, setToolMode] = useState<ToolMode>('mask-freehand');
