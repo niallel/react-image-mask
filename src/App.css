@@ -65,7 +65,7 @@
   align-items: stretch;
   justify-content: stretch;
   position: relative;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .image-mask-demo-container::before {

@@ -75,35 +75,74 @@ const ImageMaskCanvas = forwardRef<ImageMaskCanvasRef, ImageMaskCanvasProps>((pr
   const getImagePoint = useCallback((stagePoint: Point): Point => {
     if (!image) return stagePoint;
     
-    const dimensions = getScaledDimensions();
+    // Get fresh dimensions each time (don't rely on memoization)
+    const containerAspect = containerSize.width / containerSize.height;
+    const imageAspect = image.width / image.height;
+    
+    let scaledWidth, scaledHeight;
+    if (imageAspect > containerAspect) {
+      // Image is wider than container - fit to width
+      scaledWidth = containerSize.width;
+      scaledHeight = containerSize.width / imageAspect;
+    } else {
+      // Image is taller than container - fit to height
+      scaledWidth = containerSize.height * imageAspect;
+      scaledHeight = containerSize.height;
+    }
     
     // Remove zoom/pan effects first
     const displayPoint = getScaledPoint(stagePoint);
     
-    // Convert from display dimensions to original image dimensions
-    return {
-      x: (displayPoint.x / dimensions.width) * image.width,
-      y: (displayPoint.y / dimensions.height) * image.height
+    // Convert directly to image coordinates (Stage is already positioned correctly)
+    const imagePoint = {
+      x: (displayPoint.x / scaledWidth) * image.width,
+      y: (displayPoint.y / scaledHeight) * image.height
     };
-  }, [image, getScaledDimensions, getScaledPoint]);
+    
+    console.log('Coordinate conversion:', { 
+      stagePoint, 
+      displayPoint, 
+      imagePoint, 
+      containerSize, 
+      scaledWidth, 
+      scaledHeight
+    });
+    return imagePoint;
+  }, [image, containerSize, getScaledPoint]);
 
-  // Update container size on resize
+  // Update container size
   useEffect(() => {
-    const resizeObserver = new ResizeObserver((entries) => {
-      if (entries[0] && containerRef.current) {
-        const { width, height } = entries[0].contentRect;
-        setContainerSize({ width: Math.max(width - 32, 200), height: Math.max(height - 32, 200) }); // Account for padding
+    const updateSize = () => {
+      if (containerRef.current) {
+        const rect = containerRef.current.getBoundingClientRect();
+                const newWidth = Math.max(Math.round(rect.width - 32 - 2), 200);  // padding + small buffer
+        const newHeight = Math.max(Math.round(rect.height - 32 - 16 - 2), 200);  // padding + gap + small buffer
+        
+
+        
+        setContainerSize(prevSize => {
+          // Only update if there's a meaningful difference (> 1px)
+          if (Math.abs(prevSize.width - newWidth) > 1 || Math.abs(prevSize.height - newHeight) > 1) {
+
+            return { width: newWidth, height: newHeight };
+          }
+          return prevSize;
+        });
       }
+    };
+
+    const resizeObserver = new ResizeObserver(() => {
+      updateSize();
     });
 
     if (containerRef.current) {
       resizeObserver.observe(containerRef.current);
-      // Set initial size
-      const rect = containerRef.current.getBoundingClientRect();
-      setContainerSize({ width: Math.max(rect.width - 32, 200), height: Math.max(rect.height - 32, 200) });
+      updateSize(); // Set initial size
     }
 
-    return () => resizeObserver.disconnect();
+    return () => {
+      resizeObserver.disconnect();
+    };
   }, []);
 
   // Update image scale when image or container size changes
@@ -111,14 +150,17 @@ const ImageMaskCanvas = forwardRef<ImageMaskCanvasRef, ImageMaskCanvasProps>((pr
     if (image) {
       const dimensions = getScaledDimensions();
       setImageScale(dimensions.scale);
+
     }
-  }, [image, getScaledDimensions]);
+  }, [image, containerSize]);
+
+
 
   useEffect(() => {
     const img = new window.Image();
     img.src = src;
     img.onload = () => {
-      console.log('Image loaded with dimensions:', img.width, 'x', img.height);
+  
       setImage(img);
       
       // Initialize mask canvas ONLY when image loads
@@ -827,13 +869,57 @@ const ImageMaskCanvas = forwardRef<ImageMaskCanvasRef, ImageMaskCanvasProps>((pr
     setZoom: setZoom
   }));
 
-  const dimensions = getScaledDimensions();
+  // Calculate dimensions consistently
+  const calculateDimensions = useCallback(() => {
+    if (!image) return { width: containerSize.width, height: containerSize.height, scale: 1 };
+    
+    const containerAspect = containerSize.width / containerSize.height;
+    const imageAspect = image.width / image.height;
+    
+    let scaledWidth, scaledHeight, imageScale;
+    
+    if (imageAspect > containerAspect) {
+      // Image is wider than container
+      scaledWidth = containerSize.width;
+      scaledHeight = containerSize.width / imageAspect;
+      imageScale = containerSize.width / image.width;
+    } else {
+      // Image is taller than container
+      scaledWidth = containerSize.height * imageAspect;
+      scaledHeight = containerSize.height;
+      imageScale = containerSize.height / image.height;
+    }
+    
+    return { width: scaledWidth, height: scaledHeight, scale: imageScale };
+  }, [image, containerSize]);
+
+  const dimensions = calculateDimensions();
+  
+
+
+  // Force Stage to update its size
+  useEffect(() => {
+    if (stageRef.current && image) {
+      const targetDimensions = calculateDimensions();
+      const stage = stageRef.current.getStage();
+      
+
+      
+      // Explicitly set the Stage size
+      stage.width(targetDimensions.width);
+      stage.height(targetDimensions.height);
+      stage.draw();
+      
+
+    }
+  }, [containerSize, image, calculateDimensions]);
 
   return (
     <div className="image-mask-container" ref={containerRef}>
       <div className="controls">
       </div>
       <Stage
+        key={`${dimensions.width}-${dimensions.height}`}
         ref={stageRef}
         width={dimensions.width}
         height={dimensions.height}
@@ -866,6 +952,7 @@ const ImageMaskCanvas = forwardRef<ImageMaskCanvasRef, ImageMaskCanvasProps>((pr
               image={image}
               width={dimensions.width}
               height={dimensions.height}
+
             />
           )}
           {maskImage && (
