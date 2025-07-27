@@ -6,6 +6,7 @@ import './App.css';
 function App() {
   const [containerWidth, setContainerWidth] = useState(800);
   const [containerHeight, setContainerHeight] = useState(600);
+  const [imageUrl, setImageUrl] = useState('https://picsum.photos/1024/1024');
   const imageMaskRef = useRef<ImageMaskRef>(null);
 
   // Generate size options from 200px to 1200px in 100px increments
@@ -35,12 +36,36 @@ function App() {
     }
   };
 
+  const handleImageUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setImageUrl(e.target.value);
+  };
+
   return (
     <div className="App">
       <header className="App-header">
         <h1>React Image Mask Demo</h1>
         
         <div className="container-controls">
+          <div className="control-group">
+            <label htmlFor="image-url-input">Image URL:</label>
+            <input
+              id="image-url-input"
+              type="url"
+              value={imageUrl}
+              onChange={handleImageUrlChange}
+              placeholder="Enter image URL"
+              style={{
+                padding: '8px 12px',
+                border: 'none',
+                borderRadius: '4px',
+                backgroundColor: 'white',
+                color: '#333',
+                fontSize: '14px',
+                minWidth: '300px'
+              }}
+            />
+          </div>
+
           <div className="control-group">
             <label htmlFor="width-select">Container Width:</label>
             <select 
@@ -86,7 +111,11 @@ function App() {
             height: `${containerHeight}px`
           }}
         >
-          <ImageMask ref={imageMaskRef} controlsConfig={controlsConfig} />
+          <ImageMask 
+            ref={imageMaskRef} 
+            src={imageUrl}
+            controlsConfig={controlsConfig} 
+          />
         </div>
       </header>
     </div>
