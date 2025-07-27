@@ -15,12 +15,17 @@ export const downloadMask = (maskCanvas: HTMLCanvasElement | null, width: number
   const imageData = ctx.getImageData(0, 0, width, height);
   const data = imageData.data;
 
-  // Convert all non-transparent pixels to pure black with full opacity
+  // Convert to mask format: white for masked areas, black for background
   for (let i = 0; i < data.length; i += 4) {
-    if (data[i + 3] > 0) { // If pixel is not transparent
-      data[i] = 0;     // R
-      data[i + 1] = 0; // G
-      data[i + 2] = 0; // B
+    if (data[i + 3] > 0) { // If pixel was drawn on (masked area)
+      data[i] = 255;     // R (white)
+      data[i + 1] = 255; // G (white)
+      data[i + 2] = 255; // B (white)
+      data[i + 3] = 255; // A (full opacity)
+    } else { // If pixel is transparent (background)
+      data[i] = 0;       // R (black)
+      data[i + 1] = 0;   // G (black)
+      data[i + 2] = 0;   // B (black)
       data[i + 3] = 255; // A (full opacity)
     }
   }
