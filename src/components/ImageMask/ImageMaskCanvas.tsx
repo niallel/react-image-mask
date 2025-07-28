@@ -369,6 +369,43 @@ const ImageMaskCanvas = forwardRef<ImageMaskCanvasRef, ImageMaskCanvasProps>((pr
     }
   }, []);
 
+  /**
+   * Normalizes all existing mask pixels to the current opacity level
+   * This ensures consistent opacity across all mask areas and prevents buildup
+   */
+  const normalizeMaskOpacity = useCallback(() => {
+    if (!maskCanvas || !image) return;
+
+    const ctx = maskCanvas.getContext('2d');
+    if (!ctx) return;
+
+    // Get the current mask data
+    const imageData = ctx.getImageData(0, 0, image.width, image.height);
+    const data = imageData.data;
+
+    // Extract RGB values from the mask color
+    const rgbMatch = maskColor.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
+    if (!rgbMatch) return;
+    
+    const [_, r, g, b] = rgbMatch;
+
+    // Update the alpha channel for all non-transparent pixels
+    for (let i = 3; i < data.length; i += 4) {
+      if (data[i] > 0) {  // If pixel is not transparent
+        // Set the RGB values to match the mask color
+        data[i-3] = parseInt(r);
+        data[i-2] = parseInt(g);
+        data[i-1] = parseInt(b);
+        // Set the alpha to the current opacity, but never to 0
+        data[i] = Math.max(1, Math.round(currentOpacity * 255));
+      }
+    }
+
+    // Put the modified data back
+    ctx.putImageData(imageData, 0, 0);
+    updateMaskImage();
+  }, [maskCanvas, maskColor, currentOpacity, image, updateMaskImage]);
+
   const drawOnMask = useCallback((points: Point[], isEraser: boolean = false) => {
     if (!maskCanvas || !tempCanvasRef.current || !image) return;
     const ctx = maskCanvas.getContext('2d');
@@ -410,7 +447,7 @@ const ImageMaskCanvas = forwardRef<ImageMaskCanvasRef, ImageMaskCanvasProps>((pr
       tempCtx.stroke();
     } else {
       // For drawing mask, use source-over to replace existing content
-      tempCtx.globalCompositeOperation = 'xor';
+      tempCtx.globalCompositeOperation = 'source-over';
       tempCtx.beginPath();
       tempCtx.moveTo(imagePoints[0].x, imagePoints[0].y);
       for (let i = 1; i < imagePoints.length; i++) {
@@ -425,15 +462,15 @@ const ImageMaskCanvas = forwardRef<ImageMaskCanvasRef, ImageMaskCanvasProps>((pr
     }
 
     // Reset composite operation
-    tempCtx.globalCompositeOperation = 'xor';
+    tempCtx.globalCompositeOperation = 'source-over';
 
     // Copy the result back to the main canvas
     ctx.clearRect(0, 0, image.width, image.height);
     ctx.drawImage(tempCanvasRef.current, 0, 0);
 
-    // Update the mask image
-    updateMaskImage();
-  }, [maskCanvas, brushSize, getMaskColorWithOpacity, updateMaskImage, image]);
+    // Normalize all mask pixels to current opacity level
+    normalizeMaskOpacity();
+  }, [maskCanvas, brushSize, getMaskColorWithOpacity, normalizeMaskOpacity, image]);
 
   const drawBoxOnMask = useCallback((box: BoxSelection, isEraser: boolean = false) => {
     if (!maskCanvas || !tempCanvasRef.current || !image) return;
@@ -476,14 +513,14 @@ const ImageMaskCanvas = forwardRef<ImageMaskCanvasRef, ImageMaskCanvasProps>((pr
       ctx.globalCompositeOperation = 'source-over';
     } else {
       // For drawing mask, draw directly on the main canvas
-      ctx.globalCompositeOperation = 'xor';
+      ctx.globalCompositeOperation = 'source-over';
       ctx.fillStyle = getMaskColorWithOpacity();
       ctx.fillRect(imageBox.x, imageBox.y, imageBox.width, imageBox.height);
     }
 
-    // Update the mask image
-    updateMaskImage();
-  }, [maskCanvas, getMaskColorWithOpacity, updateMaskImage, containerSize, image]);
+    // Normalize all mask pixels to current opacity level
+    normalizeMaskOpacity();
+  }, [maskCanvas, getMaskColorWithOpacity, normalizeMaskOpacity, containerSize, image]);
 
   const drawPolygonOnMask = useCallback((points: Point[]) => {
     if (!maskCanvas || !tempCanvasRef.current || !image) return;
@@ -522,7 +559,7 @@ const ImageMaskCanvas = forwardRef<ImageMaskCanvasRef, ImageMaskCanvasProps>((pr
     tempCtx.drawImage(maskCanvas, 0, 0);
 
     // Draw the polygon
-    tempCtx.globalCompositeOperation = 'xor';
+    tempCtx.globalCompositeOperation = 'source-over';
     tempCtx.beginPath();
     tempCtx.moveTo(imagePoints[0].x, imagePoints[0].y);
     for (let i = 1; i < imagePoints.length; i++) {
@@ -536,9 +573,9 @@ const ImageMaskCanvas = forwardRef<ImageMaskCanvasRef, ImageMaskCanvasProps>((pr
     ctx.clearRect(0, 0, image.width, image.height);
     ctx.drawImage(tempCanvasRef.current, 0, 0);
 
-    // Update the mask image
-    updateMaskImage();
-  }, [maskCanvas, getMaskColorWithOpacity, updateMaskImage, containerSize, image]);
+    // Normalize all mask pixels to current opacity level
+    normalizeMaskOpacity();
+  }, [maskCanvas, getMaskColorWithOpacity, normalizeMaskOpacity, containerSize, image]);
 
   const handleMouseMove = useCallback((e: Konva.KonvaEventObject<MouseEvent>) => {
     const stage = e.target.getStage();
@@ -1000,8 +1037,14 @@ const ImageMaskCanvas = forwardRef<ImageMaskCanvasRef, ImageMaskCanvasProps>((pr
     props.onZoomChange?.(Math.round(boundedScale * 100));
   };
 
+  /**
+   * Sets the current opacity and normalizes all existing mask pixels
+   * 
+   * @param {number} opacity - The new opacity value (0-1)
+   */
   const setOpacity = useCallback((opacity: number) => {
     setCurrentOpacity(opacity);
+    // Use the normalized opacity value for consistency
     if (!maskCanvas || !image) return;
 
     const ctx = maskCanvas.getContext('2d');
@@ -1024,7 +1067,7 @@ const ImageMaskCanvas = forwardRef<ImageMaskCanvasRef, ImageMaskCanvasProps>((pr
         data[i-3] = parseInt(r);
         data[i-2] = parseInt(g);
         data[i-1] = parseInt(b);
-        // Set the alpha to the current opacity, but never to 0
+        // Set the alpha to the new opacity, but never to 0
         data[i] = Math.max(1, Math.round(opacity * 255));
       }
     }
@@ -1032,7 +1075,7 @@ const ImageMaskCanvas = forwardRef<ImageMaskCanvasRef, ImageMaskCanvasProps>((pr
     // Put the modified data back
     ctx.putImageData(imageData, 0, 0);
     updateMaskImage();
-  }, [maskCanvas, maskColor, width, height, updateMaskImage]);
+  }, [maskCanvas, maskColor, image, updateMaskImage]);
 
   /**
    * Expose imperative API methods through the component ref
