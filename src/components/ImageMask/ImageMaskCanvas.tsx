@@ -516,6 +516,7 @@ const ImageMaskCanvas = forwardRef<ImageMaskCanvasRef, ImageMaskCanvasProps>((pr
           );
           if (distance < 10) { // Close the polygon if within 10 pixels of first point
             drawPolygonOnMask(polygonPoints);
+            saveToHistory();
             setIsDrawingPolygon(false);
             setPolygonPoints([]);
             setTempPolygonPoint(null);
