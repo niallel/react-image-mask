@@ -5,44 +5,127 @@ import Konva from 'konva';
 import { ToolMode, Point, BoxSelection, HistoryState, ImageMaskCanvasProps, ImageMaskCanvasRef } from './types';
 import './ImageMaskCanvas.css';
 
+/**
+ * ImageMaskCanvas - The core canvas component for image masking with drawing tools
+ * 
+ * This is the low-level canvas component that handles all drawing operations, touch gestures,
+ * zoom/pan functionality, and mask data management. It uses Konva.js for high-performance
+ * canvas rendering and supports multiple drawing tools with full touch gesture support.
+ * 
+ * Key Features:
+ * - Multiple drawing tools (freehand, box, polygon selection)
+ * - Eraser tools for precise editing
+ * - Zoom/pan with mouse wheel and touch gestures
+ * - Full iPad/mobile support with pinch-to-zoom and two-finger pan
+ * - Apple Pencil compatibility
+ * - Undo/redo history management
+ * - Real-time mask preview with customizable opacity and colors
+ * - Responsive container sizing
+ * - High-performance rendering with Konva.js
+ * 
+ * @component
+ * @example
+ * ```tsx
+ * const canvasRef = useRef<ImageMaskCanvasRef>(null);
+ * 
+ * <ImageMaskCanvas
+ *   ref={canvasRef}
+ *   src="https://example.com/image.jpg"
+ *   toolMode="mask-freehand"
+ *   onZoomChange={(zoom) => console.log('Zoom:', zoom)}
+ *   onHistoryChange={(canUndo, canRedo) => console.log('History:', { canUndo, canRedo })}
+ * />
+ * ```
+ */
 const ImageMaskCanvas = forwardRef<ImageMaskCanvasRef, ImageMaskCanvasProps>((props, ref) => {
+  // Core drawing state
+  /** The loaded image element for display and mask operations */
   const [image, setImage] = useState<HTMLImageElement | null>(null);
+  /** Whether the user is currently drawing/interacting */
   const [isDrawing, setIsDrawing] = useState(false);
+  /** Starting point of the current drawing operation */
   const [startPoint, setStartPoint] = useState<Point | null>(null);
+  /** Current path being drawn for freehand tools */
   const [currentPath, setCurrentPath] = useState<Point[]>([]);
+  /** Current box selection being drawn for box tools */
   const [currentBox, setCurrentBox] = useState<BoxSelection | null>(null);
+  
+  // Canvas management
+  /** Main canvas element containing the mask data */
   const [maskCanvas, setMaskCanvas] = useState<HTMLCanvasElement | null>(null);
+  /** Temporary canvas for intermediate drawing operations */
   const [tempCanvas, setTempCanvas] = useState<HTMLCanvasElement | null>(null);
+  /** Image element created from mask canvas for Konva display */
   const [maskImage, setMaskImage] = useState<HTMLImageElement | null>(null);
+  
+  // History and state management
+  /** Undo/redo history stack */
   const [history, setHistory] = useState<HistoryState[]>([]);
+  /** Current position in the history stack */
   const [historyIndex, setHistoryIndex] = useState<number>(-1);
+  /** Current opacity of the mask overlay (0-1) */
   const [currentOpacity, setCurrentOpacity] = useState<number>(props.opacity || 0.5);
+  
+  // Zoom and positioning
+  /** Current zoom scale factor (1 = 100%) */
   const [scale, setScale] = useState<number>(1);
+  /** Current pan position of the canvas */
   const [position, setPosition] = useState<Point>({ x: 0, y: 0 });
+  
+  // Drawing settings
+  /** Current mask color in RGBA format */
   const [maskColor, setMaskColor] = useState<string>('rgba(0, 0, 0, 1)');
+  /** Current brush size in pixels */
   const [brushSize, setBrushSize] = useState<number>(10);
+  /** Current cursor position for brush preview */
   const [cursorPosition, setCursorPosition] = useState<Point | null>(null);
+  
+  // Polygon tool state
+  /** Points of the polygon being drawn */
   const [polygonPoints, setPolygonPoints] = useState<Point[]>([]);
+  /** Whether a polygon is currently being drawn */
   const [isDrawingPolygon, setIsDrawingPolygon] = useState(false);
+  /** Temporary point for polygon preview line */
   const [tempPolygonPoint, setTempPolygonPoint] = useState<Point | null>(null);
   
-  // Touch gesture state for iPad support
+  // Touch gesture state for iPad/mobile support
+  /** Distance between two touch points for pinch detection */
   const [lastTouchDistance, setLastTouchDistance] = useState<number>(0);
+  /** Center point of two-finger touch gesture */
   const [lastTouchCenter, setLastTouchCenter] = useState<Point | null>(null);
+  /** Timestamp when touch gesture started */
   const [touchStartTime, setTouchStartTime] = useState<number>(0);
   
-  // Container size tracking for responsive layout
+  // Responsive layout state
+  /** Current size of the container element */
   const [containerSize, setContainerSize] = useState<{ width: number; height: number }>({ width: 800, height: 600 });
+  /** Ref to the container div for size measurements */
   const containerRef = useRef<HTMLDivElement>(null);
 
+  // Extract props for easier access
   const { src, width, height, onZoomChange, toolMode, onHistoryChange } = props;
+  
+  // Canvas and performance refs
+  /** Ref to the Konva Stage element */
   const stageRef = useRef<Konva.Stage>(null);
+  /** Ref to the Konva Layer element */
   const layerRef = useRef<Konva.Layer>(null);
+  /** Ref for accumulating drawing path points during interaction */
   const drawingPathRef = useRef<Point[]>([]);
+  /** Timestamp of last update for performance throttling */
   const lastUpdateTimeRef = useRef<number>(0);
+  /** Animation frame ID for throttled updates */
   const animationFrameRef = useRef<number | undefined>(undefined);
+  /** Ref to temporary canvas for drawing operations */
   const tempCanvasRef = useRef<HTMLCanvasElement | null>(null);
 
+  /**
+   * Converts a stage point to image-relative coordinates accounting for zoom and pan
+   * This function is used to transform mouse/touch coordinates to the actual image space
+   * 
+   * @param {Point} point - The raw stage coordinates from mouse/touch events
+   * @returns {Point} The point transformed to image coordinates
+   */
   const getScaledPoint = useCallback((point: Point): Point => {
     return {
       x: (point.x - position.x) / scale,
@@ -50,8 +133,18 @@ const ImageMaskCanvas = forwardRef<ImageMaskCanvasRef, ImageMaskCanvasProps>((pr
     };
   }, [position, scale]);
 
-  // Calculate dimensions that fit the image within the container while maintaining aspect ratio
+  /**
+   * Calculates scaled dimensions that fit the image within the container while maintaining aspect ratio
+   * This function determines how the image should be displayed to fit within the available space
+   * without distortion, similar to CSS object-fit: contain behavior.
+   * 
+   * @returns {Object} Object containing the scaled width, height, and scale factor
+   * @returns {number} return.width - The display width of the image
+   * @returns {number} return.height - The display height of the image  
+   * @returns {number} return.scale - The scale factor applied to the original image
+   */
   const getScaledDimensions = useCallback(() => {
+    // Return container dimensions if no image is loaded yet
     if (!image) return { width: containerSize.width, height: containerSize.height, scale: 1 };
     
     const containerAspect = containerSize.width / containerSize.height;
@@ -60,12 +153,12 @@ const ImageMaskCanvas = forwardRef<ImageMaskCanvasRef, ImageMaskCanvasProps>((pr
     let scaledWidth, scaledHeight, imageScale;
     
     if (imageAspect > containerAspect) {
-      // Image is wider than container
+      // Image is wider than container - fit to width
       scaledWidth = containerSize.width;
       scaledHeight = containerSize.width / imageAspect;
       imageScale = containerSize.width / image.width;
     } else {
-      // Image is taller than container
+      // Image is taller than container - fit to height
       scaledWidth = containerSize.height * imageAspect;
       scaledHeight = containerSize.height;
       imageScale = containerSize.height / image.height;
@@ -941,61 +1034,97 @@ const ImageMaskCanvas = forwardRef<ImageMaskCanvasRef, ImageMaskCanvasProps>((pr
     updateMaskImage();
   }, [maskCanvas, maskColor, width, height, updateMaskImage]);
 
+  /**
+   * Expose imperative API methods through the component ref
+   * This allows parent components to control the canvas programmatically
+   * without triggering re-renders or managing internal state externally
+   */
   useImperativeHandle(ref, () => ({
+    /**
+     * Exports the current mask as a base64 encoded PNG image
+     * Converts the mask to standard format: white pixels for masked areas, black for background
+     * 
+     * @returns {string | null} Base64 encoded PNG image data, or null if no mask exists
+     */
     getMaskData: () => {
       if (!maskCanvas || !image) return null;
       
-      // Create a temporary canvas to convert to solid black pixels
+      // Create a temporary canvas to process the mask data
       const tempCanvas = document.createElement('canvas');
       tempCanvas.width = image.width;
       tempCanvas.height = image.height;
       const ctx = tempCanvas.getContext('2d');
       if (!ctx) return null;
 
-      // Draw the current mask
+      // Copy the current mask to the temporary canvas
       ctx.drawImage(maskCanvas, 0, 0);
 
-      // Get the image data
+      // Extract the raw pixel data
       const imageData = ctx.getImageData(0, 0, image.width, image.height);
       const data = imageData.data;
 
-      // Convert to mask format: white for masked areas, black for background
+      // Convert to standard mask format: white for masked areas, black for background
       for (let i = 0; i < data.length; i += 4) {
-        if (data[i + 3] > 0) { // If pixel was drawn on (masked area)
-          data[i] = 255;     // R (white)
-          data[i + 1] = 255; // G (white)
-          data[i + 2] = 255; // B (white)
-          data[i + 3] = 255; // A (full opacity)
+        if (data[i + 3] > 0) { // If pixel has alpha (was drawn on)
+          data[i] = 255;     // Red: white
+          data[i + 1] = 255; // Green: white
+          data[i + 2] = 255; // Blue: white
+          data[i + 3] = 255; // Alpha: full opacity
         } else { // If pixel is transparent (background)
-          data[i] = 0;       // R (black)
-          data[i + 1] = 0;   // G (black)
-          data[i + 2] = 0;   // B (black)
-          data[i + 3] = 255; // A (full opacity)
+          data[i] = 0;       // Red: black
+          data[i + 1] = 0;   // Green: black
+          data[i + 2] = 0;   // Blue: black
+          data[i + 3] = 255; // Alpha: full opacity
         }
       }
 
-      // Put the modified data back
+      // Apply the processed data back to the canvas
       ctx.putImageData(imageData, 0, 0);
 
-      // Return as data URL
+      // Return as base64 encoded PNG
       return tempCanvas.toDataURL('image/png');
     },
+    /** Clears all mask data from the canvas */
     clearMask,
-        undo,
+    /** Undoes the last drawing action */
+    undo,
+    /** Redoes the last undone action */
     redo,
+    /** 
+     * Sets the active tool mode (controlled by parent component)
+     * @param {ToolMode} mode - The tool mode to set
+     */
     setToolMode: (mode: ToolMode) => {
       // No need to set state since it's controlled by parent
     },
+    /** 
+     * Sets the mask color and updates existing mask pixels
+     * @param {string} color - New color in RGBA format
+     */
     setMaskColor: (color: string) => {
       setMaskColor(color);
       updateMaskColor(color);
     },
+    /** 
+     * Sets the mask opacity
+     * @param {number} opacity - New opacity value (0-1)
+     */
     setOpacity: setOpacity,
+    /** 
+     * Sets the brush size for drawing tools
+     * @param {number} size - New brush size in pixels
+     */
     setBrushSize: (size: number) => {
       setBrushSize(size);
     },
+    /** Whether undo is currently available */
     canUndo: history.length > 1,
+    /** Whether redo is currently available */
     canRedo: historyIndex < history.length - 1,
+    /** 
+     * Sets the zoom level of the canvas
+     * @param {number} zoomPercentage - Zoom level as percentage (100 = 100%)
+     */
     setZoom: setZoom
   }));
 
@@ -1029,13 +1158,30 @@ const ImageMaskCanvas = forwardRef<ImageMaskCanvasRef, ImageMaskCanvasProps>((pr
 
   const dimensions = calculateDimensions();
   
-  // Helper functions for touch gestures
+  // Touch gesture helper functions for iPad/mobile support
+  
+  /**
+   * Calculates the distance between two touch points
+   * Used for pinch-to-zoom gesture detection and scaling calculations
+   * 
+   * @param {Touch} touch1 - First touch point
+   * @param {Touch} touch2 - Second touch point
+   * @returns {number} The distance between the two touch points in pixels
+   */
   const getTouchDistance = (touch1: Touch, touch2: Touch): number => {
     const dx = touch1.clientX - touch2.clientX;
     const dy = touch1.clientY - touch2.clientY;
     return Math.sqrt(dx * dx + dy * dy);
   };
 
+  /**
+   * Calculates the center point between two touches
+   * Used for determining the pivot point for pinch-to-zoom operations
+   * 
+   * @param {Touch} touch1 - First touch point
+   * @param {Touch} touch2 - Second touch point
+   * @returns {Point} The center point between the two touches in screen coordinates
+   */
   const getTouchCenter = (touch1: Touch, touch2: Touch): Point => {
     return {
       x: (touch1.clientX + touch2.clientX) / 2,
@@ -1043,6 +1189,13 @@ const ImageMaskCanvas = forwardRef<ImageMaskCanvasRef, ImageMaskCanvasProps>((pr
     };
   };
 
+  /**
+   * Converts a touch point to stage-relative coordinates
+   * Transforms touch coordinates from screen space to the Konva stage coordinate system
+   * 
+   * @param {Touch} touch - The touch point to convert
+   * @returns {Point | null} The touch point in stage coordinates, or null if stage is not available
+   */
   const getStagePointFromTouch = (touch: Touch): Point | null => {
     const stage = stageRef.current;
     if (!stage) return null;
@@ -1207,6 +1360,7 @@ const ImageMaskCanvas = forwardRef<ImageMaskCanvasRef, ImageMaskCanvasProps>((pr
   );
 });
 
+// Set display name for better debugging and React Developer Tools
 ImageMaskCanvas.displayName = 'ImageMaskCanvas';
 
 export default ImageMaskCanvas;

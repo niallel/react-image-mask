@@ -4,6 +4,10 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faArrowsUpDownLeftRight, faEraser, faMarker, faSquare, faMagnifyingGlass, faRotateLeft, faRotateRight, faTrash, faCircleDown, faDrawPolygon } from "@fortawesome/free-solid-svg-icons";
 import "./ImageMaskControls.css";
 
+/**
+ * Predefined color options for the mask color picker
+ * Provides common colors in RGBA format for quick selection
+ */
 const colorOptions: ColorOption[] = [
   { name: 'Black', value: 'rgba(0, 0, 0, 1)' },
   { name: 'White', value: 'rgba(255, 255, 255, 1)' },
@@ -14,36 +18,109 @@ const colorOptions: ColorOption[] = [
   { name: 'Pink', value: 'rgba(255, 192, 203, 1)' }
 ];
 
+/** Available brush sizes in pixels for the brush size picker */
 const brushSizes = [5, 10, 20, 30, 40, 50, 60];
+
+/** Available zoom levels as percentages for the zoom picker */
 const zoomLevels = [100, 200, 300, 400, 500, 600, 700, 800, 900, 1000];
 
+/**
+ * ImageMaskControls - UI controls component for the image mask editor
+ * 
+ * This component provides a comprehensive control panel with tool selection,
+ * settings adjustments, and action buttons. It includes dropdown menus for
+ * color selection, brush sizes, zoom levels, and tool-specific options.
+ * All controls are configurable and can be shown/hidden based on requirements.
+ * 
+ * Features:
+ * - Tool selection (move, freehand, box, polygon, eraser tools)
+ * - Color picker with predefined colors and custom color input
+ * - Brush size selection with visual preview
+ * - Opacity slider for mask transparency
+ * - Zoom controls with preset levels
+ * - Undo/redo functionality
+ * - Clear and download actions
+ * - Fully configurable UI (show/hide sections)
+ * - Responsive dropdown menus with click-outside-to-close
+ * 
+ * @component
+ * @example
+ * ```tsx
+ * <ImageMaskControls
+ *   setToolMode={setToolMode}
+ *   toolMode={toolMode}
+ *   clearCanvas={clearCanvas}
+ *   currentZoom={zoom}
+ *   undo={undo}
+ *   redo={redo}
+ *   canUndo={canUndo}
+ *   canRedo={canRedo}
+ *   onDownloadMask={handleDownload}
+ *   setMaskColor={setMaskColor}
+ *   currentMaskColor={maskColor}
+ *   setOpacity={setOpacity}
+ *   currentOpacity={opacity}
+ *   setBrushSize={setBrushSize}
+ *   currentBrushSize={brushSize}
+ *   setZoom={setZoom}
+ *   controlsConfig={controlsConfig}
+ * />
+ * ```
+ */
 export const ImageMaskControls = ({setToolMode, toolMode, clearCanvas, currentZoom, undo, redo, canUndo, canRedo, onDownloadMask, setMaskColor, currentMaskColor, setOpacity, currentOpacity, setBrushSize, currentBrushSize, setZoom, controlsConfig}: {
+    /** Function to set the active tool mode */
     setToolMode: (toolMode: ToolMode) => void, 
+    /** Currently active tool mode */
     toolMode: ToolMode,
+    /** Function to clear all mask data */
     clearCanvas?: () => void,
+    /** Current zoom level as percentage */
     currentZoom?: number,
+    /** Function to undo the last action */
     undo?: () => void,
+    /** Function to redo the last undone action */
     redo?: () => void,
+    /** Whether undo is currently available */
     canUndo?: boolean,
+    /** Whether redo is currently available */
     canRedo?: boolean,
+    /** Function to download the current mask */
     onDownloadMask?: () => void,
+    /** Function to set the mask color */
     setMaskColor?: (color: string) => void,
+    /** Current mask color in RGBA format */
     currentMaskColor?: string,
+    /** Function to set the mask opacity */
     setOpacity?: (opacity: number) => void,
+    /** Current mask opacity (0-1) */
     currentOpacity?: number,
+    /** Function to set the brush size */
     setBrushSize?: (size: number) => void,
+    /** Current brush size in pixels */
     currentBrushSize?: number,
+    /** Function to set the zoom level */
     setZoom?: (zoom: number) => void,
+    /** Configuration for which controls to display */
     controlsConfig?: ControlsConfig
 }) => {
+    // Dropdown state management
+    /** Whether the color picker dropdown is open */
     const [showColorDropdown, setShowColorDropdown] = useState(false);
+    /** Whether the brush size dropdown is open */
     const [showBrushDropdown, setShowBrushDropdown] = useState(false);
+    /** Whether the zoom level dropdown is open */
     const [showZoomDropdown, setShowZoomDropdown] = useState(false);
+    /** Whether the mask tools dropdown is open */
     const [showMaskDropdown, setShowMaskDropdown] = useState(false);
+    /** Whether the eraser tools dropdown is open */
     const [showEraserDropdown, setShowEraserDropdown] = useState(false);
+    /** Ref to the controls container for click-outside detection */
     const controlsRef = useRef<HTMLDivElement>(null);
 
-    // Default controls config if not provided
+    /**
+     * Merged configuration with defaults
+     * Ensures all control sections have a defined visibility state
+     */
     const config = controlsConfig || {
         showDownloadButton: true,
         showClearButton: true,
@@ -55,6 +132,10 @@ export const ImageMaskControls = ({setToolMode, toolMode, clearCanvas, currentZo
         showZoomControls: true
     };
 
+    /**
+     * Closes all open dropdown menus
+     * Used when clicking outside the controls or switching tools
+     */
     const closeAllDropdowns = () => {
         setShowColorDropdown(false);
         setShowBrushDropdown(false);
@@ -63,14 +144,25 @@ export const ImageMaskControls = ({setToolMode, toolMode, clearCanvas, currentZo
         setShowEraserDropdown(false);
     };
 
+    /**
+     * Effect to handle clicking outside the controls to close dropdowns
+     * Provides intuitive UX by closing menus when user clicks elsewhere
+     */
     useEffect(() => {
+        /**
+         * Handles mouse clicks outside the controls container
+         * @param {MouseEvent} event - The mouse click event
+         */
         const handleClickOutside = (event: MouseEvent) => {
             if (controlsRef.current && !controlsRef.current.contains(event.target as Node)) {
                 closeAllDropdowns();
             }
         };
 
+        // Add event listener for clicks outside the controls
         document.addEventListener('mousedown', handleClickOutside);
+        
+        // Cleanup function to remove event listener on unmount
         return () => {
             document.removeEventListener('mousedown', handleClickOutside);
         };
