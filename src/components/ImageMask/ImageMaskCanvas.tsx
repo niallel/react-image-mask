@@ -1,7 +1,7 @@
-import React, { useState, useRef, useEffect, useCallback, forwardRef, useImperativeHandle } from 'react';
+import { useState, useRef, useEffect, useCallback, forwardRef, useImperativeHandle } from 'react';
 import { Stage, Layer, Image, Group, Line, Rect, Circle } from 'react-konva';
 import Konva from 'konva';
-import { downloadMask } from './utils/downloadMask';
+
 import { ToolMode, Point, BoxSelection, HistoryState, ImageMaskCanvasProps, ImageMaskCanvasRef } from './types';
 import './ImageMaskCanvas.css';
 
@@ -17,7 +17,6 @@ const ImageMaskCanvas = forwardRef<ImageMaskCanvasRef, ImageMaskCanvasProps>((pr
   const [history, setHistory] = useState<HistoryState[]>([]);
   const [historyIndex, setHistoryIndex] = useState<number>(-1);
   const [currentOpacity, setCurrentOpacity] = useState<number>(props.opacity || 0.5);
-  const prevOpacityRef = useRef<number>(props.opacity || 0.5);
   const [scale, setScale] = useState<number>(1);
   const [position, setPosition] = useState<Point>({ x: 0, y: 0 });
   const [maskColor, setMaskColor] = useState<string>('rgba(0, 0, 0, 1)');
@@ -29,7 +28,6 @@ const ImageMaskCanvas = forwardRef<ImageMaskCanvasRef, ImageMaskCanvasProps>((pr
   
   // Container size tracking for responsive layout
   const [containerSize, setContainerSize] = useState<{ width: number; height: number }>({ width: 800, height: 600 });
-  const [imageScale, setImageScale] = useState<number>(1);
   const containerRef = useRef<HTMLDivElement>(null);
 
   const { src, width, height, onZoomChange, toolMode, onHistoryChange } = props;
@@ -71,48 +69,7 @@ const ImageMaskCanvas = forwardRef<ImageMaskCanvasRef, ImageMaskCanvasProps>((pr
     return { width: scaledWidth, height: scaledHeight, scale: imageScale };
   }, [image, containerSize]);
 
-    // Convert stage coordinates directly to mask canvas coordinates
-  const getImagePoint = useCallback((stagePoint: Point): Point => {
-    if (!image) return stagePoint;
-    
-    // New approach: Stage is exactly the image display size, Images are at (0,0)
-    // So we can convert directly from stage coordinates to image coordinates
-    
-    // Remove zoom/pan effects first
-    const displayPoint = getScaledPoint(stagePoint);
-    
-    // ALWAYS get fresh container size to avoid stale closure issues
-    const currentContainerSize = containerRef.current?.getBoundingClientRect();
-    if (!currentContainerSize) return stagePoint;
-    
-    const freshContainerSize = {
-      width: Math.max(Math.round(currentContainerSize.width - 32 - 2), 200),
-      height: Math.max(Math.round(currentContainerSize.height - 32 - 16 - 2), 200)
-    };
-    
-    // Calculate dimensions using fresh container size
-    const containerAspect = freshContainerSize.width / freshContainerSize.height;
-    const imageAspect = image.width / image.height;
-    
-    let displayWidth, displayHeight;
-    if (imageAspect > containerAspect) {
-      displayWidth = freshContainerSize.width;
-      displayHeight = freshContainerSize.width / imageAspect;
-    } else {
-      displayWidth = freshContainerSize.height * imageAspect;
-      displayHeight = freshContainerSize.height;
-    }
-    
-    // Convert directly to image coordinates
-    const imagePoint = {
-      x: (displayPoint.x / displayWidth) * image.width,
-      y: (displayPoint.y / displayHeight) * image.height
-    };
-    
 
-    
-    return imagePoint;
-  }, [image, getScaledPoint]);
 
   // Update container size
   useEffect(() => {
@@ -149,17 +106,6 @@ const ImageMaskCanvas = forwardRef<ImageMaskCanvasRef, ImageMaskCanvasProps>((pr
       resizeObserver.disconnect();
     };
   }, []);
-
-  // Update image scale when image or container size changes
-  useEffect(() => {
-    if (image) {
-      const dimensions = getScaledDimensions();
-      setImageScale(dimensions.scale);
-
-    }
-  }, [image, containerSize]);
-
-
 
   useEffect(() => {
     const img = new window.Image();
@@ -333,7 +279,16 @@ const ImageMaskCanvas = forwardRef<ImageMaskCanvasRef, ImageMaskCanvasProps>((pr
     if (points.length < 2) return;
 
     // Convert display points to image coordinates
-    const imagePoints = points.map(getImagePoint);
+    // Points come in as "group coordinates" (already have zoom/pan applied)
+    // We need to convert them to image coordinates
+    const currentDimensions = calculateDimensions();
+    const imagePoints = points.map(point => ({
+      x: (point.x / currentDimensions.width) * image.width,
+      y: (point.y / currentDimensions.height) * image.height
+    }));
+
+    // Use the current dimensions for brush size scaling
+    const displayWidth = currentDimensions.width;
 
     // Clear the temporary canvas
     tempCtx.clearRect(0, 0, image.width, image.height);
@@ -349,8 +304,8 @@ const ImageMaskCanvas = forwardRef<ImageMaskCanvasRef, ImageMaskCanvasProps>((pr
       for (let i = 1; i < imagePoints.length; i++) {
         tempCtx.lineTo(imagePoints[i].x, imagePoints[i].y);
       }
-      const dimensions = getScaledDimensions();
-      tempCtx.lineWidth = (brushSize / dimensions.width) * image.width; // Scale brush size to image coordinates
+      // Use the same display width calculation as getImagePoint for consistency
+      tempCtx.lineWidth = (brushSize / displayWidth) * image.width;
       tempCtx.lineCap = 'round';
       tempCtx.lineJoin = 'round';
       tempCtx.strokeStyle = 'rgba(0, 0, 0, 1)';
@@ -363,8 +318,8 @@ const ImageMaskCanvas = forwardRef<ImageMaskCanvasRef, ImageMaskCanvasProps>((pr
       for (let i = 1; i < imagePoints.length; i++) {
         tempCtx.lineTo(imagePoints[i].x, imagePoints[i].y);
       }
-      const dimensions = getScaledDimensions();
-      tempCtx.lineWidth = (brushSize / dimensions.width) * image.width; // Scale brush size to image coordinates
+      // Use the same display width calculation as getImagePoint for consistency
+      tempCtx.lineWidth = (brushSize / displayWidth) * image.width;
       tempCtx.lineCap = 'round';
       tempCtx.lineJoin = 'round';
       tempCtx.strokeStyle = getMaskColorWithOpacity();
@@ -380,7 +335,7 @@ const ImageMaskCanvas = forwardRef<ImageMaskCanvasRef, ImageMaskCanvasProps>((pr
 
     // Update the mask image
     updateMaskImage();
-  }, [maskCanvas, brushSize, getMaskColorWithOpacity, updateMaskImage, width, height]);
+  }, [maskCanvas, brushSize, getMaskColorWithOpacity, updateMaskImage, image]);
 
   const drawBoxOnMask = useCallback((box: BoxSelection, isEraser: boolean = false) => {
     if (!maskCanvas || !tempCanvasRef.current || !image) return;
@@ -494,27 +449,31 @@ const ImageMaskCanvas = forwardRef<ImageMaskCanvasRef, ImageMaskCanvasProps>((pr
     const point = stage.getPointerPosition();
     if (!point) return;
 
-    const scaledPoint = getScaledPoint(point);
-    setCursorPosition(scaledPoint);
+    // Convert to group coordinates (accounting for zoom/pan)
+    const groupPoint = {
+      x: (point.x - position.x) / scale,
+      y: (point.y - position.y) / scale
+    };
+    setCursorPosition(groupPoint);
 
-    if (props.toolMode === 'mask-polygon') {
-      if (isDrawingPolygon && polygonPoints.length > 0) {
-        setTempPolygonPoint(scaledPoint);
+          if (props.toolMode === 'mask-polygon') {
+        if (isDrawingPolygon && polygonPoints.length > 0) {
+          setTempPolygonPoint(groupPoint);
+        }
+        return;
       }
-      return;
-    }
 
-    if (!isDrawing || !startPoint) return;
+      if (!isDrawing || !startPoint) return;
 
-    if (props.toolMode === 'mask-box' || props.toolMode === 'eraser-box') {
-      const x = Math.min(startPoint.x, scaledPoint.x);
-      const y = Math.min(startPoint.y, scaledPoint.y);
-      const width = Math.abs(scaledPoint.x - startPoint.x);
-      const height = Math.abs(scaledPoint.y - startPoint.y);
-      setCurrentBox({ x, y, width, height });
-    } else {
-      // Add point to the ref instead of state
-      drawingPathRef.current.push(scaledPoint);
+      if (props.toolMode === 'mask-box' || props.toolMode === 'eraser-box') {
+        const x = Math.min(startPoint.x, groupPoint.x);
+        const y = Math.min(startPoint.y, groupPoint.y);
+        const width = Math.abs(groupPoint.x - startPoint.x);
+        const height = Math.abs(groupPoint.y - startPoint.y);
+        setCurrentBox({ x, y, width, height });
+      } else {
+        // Add point to the ref instead of state
+        drawingPathRef.current.push(groupPoint);
       
       // Throttle the preview update
       const now = performance.now();
@@ -537,19 +496,23 @@ const ImageMaskCanvas = forwardRef<ImageMaskCanvasRef, ImageMaskCanvasProps>((pr
     const point = stage.getPointerPosition();
     if (!point) return;
 
-    const scaledPoint = getScaledPoint(point);
+    // Convert to group coordinates (accounting for zoom/pan)
+    const groupPoint = {
+      x: (point.x - position.x) / scale,
+      y: (point.y - position.y) / scale
+    };
 
     if (props.toolMode === 'mask-polygon') {
       if (!isDrawingPolygon) {
         setIsDrawingPolygon(true);
-        setPolygonPoints([scaledPoint]);
+        setPolygonPoints([groupPoint]);
       } else {
         // Check if we're closing the polygon (clicking near the first point)
         if (polygonPoints.length > 2) {
           const firstPoint = polygonPoints[0];
           const distance = Math.sqrt(
-            Math.pow(scaledPoint.x - firstPoint.x, 2) +
-            Math.pow(scaledPoint.y - firstPoint.y, 2)
+            Math.pow(groupPoint.x - firstPoint.x, 2) +
+            Math.pow(groupPoint.y - firstPoint.y, 2)
           );
           if (distance < 10) { // Close the polygon if within 10 pixels of first point
             drawPolygonOnMask(polygonPoints);
@@ -559,18 +522,18 @@ const ImageMaskCanvas = forwardRef<ImageMaskCanvasRef, ImageMaskCanvasProps>((pr
             return;
           }
         }
-        setPolygonPoints([...polygonPoints, scaledPoint]);
+        setPolygonPoints([...polygonPoints, groupPoint]);
       }
       return;
     }
 
     setIsDrawing(true);
-    setStartPoint(scaledPoint);
+    setStartPoint(groupPoint);
     
     if (props.toolMode === 'mask-box' || props.toolMode === 'eraser-box') {
-      setCurrentBox({ x: scaledPoint.x, y: scaledPoint.y, width: 0, height: 0 });
+      setCurrentBox({ x: groupPoint.x, y: groupPoint.y, width: 0, height: 0 });
     } else {
-      setCurrentPath([scaledPoint]);
+      setCurrentPath([groupPoint]);
     }
   };
 
@@ -892,7 +855,7 @@ const ImageMaskCanvas = forwardRef<ImageMaskCanvasRef, ImageMaskCanvasProps>((pr
       return tempCanvas.toDataURL('image/png');
     },
     clearMask,
-    undo,
+        undo,
     redo,
     setToolMode: (mode: ToolMode) => {
       // No need to set state since it's controlled by parent
@@ -940,12 +903,6 @@ const ImageMaskCanvas = forwardRef<ImageMaskCanvasRef, ImageMaskCanvasProps>((pr
 
   const dimensions = calculateDimensions();
   
-  // Calculate image positioning within Stage 
-  const imageOffset = {
-    x: (containerSize.width - dimensions.width) / 2,
-    y: (containerSize.height - dimensions.height) / 2
-  };
-  
 
   
 
@@ -983,24 +940,13 @@ const ImageMaskCanvas = forwardRef<ImageMaskCanvasRef, ImageMaskCanvasProps>((pr
         <Stage
           key={`${dimensions.width}-${dimensions.height}`}
           ref={stageRef}
-          width={dimensions.width}
-          height={dimensions.height}
+          width={containerSize.width}
+          height={containerSize.height}
           onMouseDown={handleMouseDown}
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUp}
           onWheel={handleWheel}
           onMouseLeave={handleMouseLeave}
-          scaleX={scale}
-          scaleY={scale}
-          x={position.x}
-          y={position.y}
-          draggable={props.toolMode === 'move'}
-          onDragEnd={(e) => {
-            setPosition({
-              x: e.target.x(),
-              y: e.target.y(),
-            });
-          }}
           data-testid="drawing-stage"
           style={{
                       cursor: props.toolMode === 'move' ? 'grab' :
@@ -1009,24 +955,37 @@ const ImageMaskCanvas = forwardRef<ImageMaskCanvasRef, ImageMaskCanvasProps>((pr
           }}
         >
         <Layer ref={layerRef}>
-          {image && (
-            <Image
-              image={image}
-              x={0}
-              y={0}
-              width={dimensions.width}
-              height={dimensions.height}
-            />
-          )}
-          {maskImage && (
-            <Image
-              image={maskImage}
-              x={0}
-              y={0}
-              width={dimensions.width}
-              height={dimensions.height}
-            />
-          )}
+          <Group
+            scaleX={scale}
+            scaleY={scale}
+            x={position.x}
+            y={position.y}
+            draggable={props.toolMode === 'move'}
+            onDragEnd={(e) => {
+              setPosition({
+                x: e.target.x(),
+                y: e.target.y(),
+              });
+            }}
+          >
+            {image && (
+              <Image
+                image={image}
+                x={0}
+                y={0}
+                width={dimensions.width}
+                height={dimensions.height}
+              />
+            )}
+            {maskImage && (
+              <Image
+                image={maskImage}
+                x={0}
+                y={0}
+                width={dimensions.width}
+                height={dimensions.height}
+              />
+            )}
           {props.toolMode === 'mask-polygon' && polygonPoints.length > 0 && (
             <Group>
               <Line
@@ -1091,6 +1050,7 @@ const ImageMaskCanvas = forwardRef<ImageMaskCanvasRef, ImageMaskCanvasProps>((pr
               fill={props.toolMode?.startsWith('eraser') ? 'rgba(255, 0, 0, 0.3)' : maskColor.replace('1)', '0.3)')}
             />
           )}
+          </Group>
         </Layer>
       </Stage>
       </div>
