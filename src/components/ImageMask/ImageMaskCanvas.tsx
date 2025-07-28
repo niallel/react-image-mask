@@ -312,7 +312,7 @@ const ImageMaskCanvas = forwardRef<ImageMaskCanvasRef, ImageMaskCanvasProps>((pr
       tempCtx.stroke();
     } else {
       // For drawing mask, use source-over to replace existing content
-      tempCtx.globalCompositeOperation = 'source-over';
+      tempCtx.globalCompositeOperation = 'xor';
       tempCtx.beginPath();
       tempCtx.moveTo(imagePoints[0].x, imagePoints[0].y);
       for (let i = 1; i < imagePoints.length; i++) {
@@ -327,7 +327,7 @@ const ImageMaskCanvas = forwardRef<ImageMaskCanvasRef, ImageMaskCanvasProps>((pr
     }
 
     // Reset composite operation
-    tempCtx.globalCompositeOperation = 'source-over';
+    tempCtx.globalCompositeOperation = 'xor';
 
     // Copy the result back to the main canvas
     ctx.clearRect(0, 0, image.width, image.height);
@@ -378,7 +378,7 @@ const ImageMaskCanvas = forwardRef<ImageMaskCanvasRef, ImageMaskCanvasProps>((pr
       ctx.globalCompositeOperation = 'source-over';
     } else {
       // For drawing mask, draw directly on the main canvas
-      ctx.globalCompositeOperation = 'source-over';
+      ctx.globalCompositeOperation = 'xor';
       ctx.fillStyle = getMaskColorWithOpacity();
       ctx.fillRect(imageBox.x, imageBox.y, imageBox.width, imageBox.height);
     }
@@ -424,7 +424,7 @@ const ImageMaskCanvas = forwardRef<ImageMaskCanvasRef, ImageMaskCanvasProps>((pr
     tempCtx.drawImage(maskCanvas, 0, 0);
 
     // Draw the polygon
-    tempCtx.globalCompositeOperation = 'source-over';
+    tempCtx.globalCompositeOperation = 'xor';
     tempCtx.beginPath();
     tempCtx.moveTo(imagePoints[0].x, imagePoints[0].y);
     for (let i = 1; i < imagePoints.length; i++) {
