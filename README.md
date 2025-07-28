@@ -514,12 +514,48 @@ interface ImageMaskCanvasRef {
 - **Multiple Drawing Tools**: Freehand, box selection, polygon selection
 - **Eraser Tools**: Freehand and box eraser
 - **Zoom Controls**: Zoom in/out with mouse wheel or controls
+- **Touch Gestures**: Full iPad/mobile support with pinch-to-zoom and pan gestures
+- **Apple Pencil Support**: Works seamlessly with Apple Pencil on iPad
 - **History**: Undo/redo functionality
 - **Customizable**: Adjustable brush size, opacity, and colors
 - **Download**: Export mask as PNG
 - **TypeScript**: Full TypeScript support
 - **Flexible Controls**: Show/hide specific control sections
 - **Responsive**: Automatically scales images to fit container
+
+## Touch & Mobile Support
+
+The component provides full touch gesture support for iPad and mobile devices:
+
+### 📱 **Supported Gestures**
+
+- **Single Touch Drawing**: Use finger or Apple Pencil for all drawing tools
+- **Two-Finger Zoom**: Pinch gesture for zooming in/out (100%-1000%)
+- **Two-Finger Pan**: Drag with two fingers to pan around zoomed images (works in any tool mode)
+- **Apple Pencil**: Full precision support for Apple Pencil on iPad
+
+### 🎯 **How to Use on Mobile**
+
+1. **Drawing**: Use any drawing tool and draw with finger or stylus
+2. **Zooming**: Use two fingers to pinch zoom in/out on the canvas
+3. **Panning**: Use two fingers to drag and pan around (no need to switch tools)
+4. **Combined**: You can zoom and pan simultaneously with two fingers
+5. **Tools**: All tools work with touch - freehand, box, polygon, eraser
+
+### ⚙️ **Technical Details**
+
+- **Touch Conflict Prevention**: Drawing only occurs with single touch to avoid accidental marks during navigation
+- **Native iOS Feel**: Two-finger zoom and pan gestures work like standard iOS apps (Photos, Maps, etc.)
+- **Simultaneous Gestures**: Can zoom and pan at the same time with two fingers
+- **Browser Zoom Disabled**: `touchAction: 'none'` prevents browser zoom interference
+- **Smart Gesture Detection**: Distinguishes between single-touch drawing and two-finger navigation
+
+### 📋 **Browser Support**
+
+- ✅ Safari on iPad/iPhone
+- ✅ Chrome on Android
+- ✅ Edge on Surface devices
+- ✅ Any modern mobile browser with touch support
 
 ## Development
 

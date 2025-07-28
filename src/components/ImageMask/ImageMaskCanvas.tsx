@@ -26,6 +26,11 @@ const ImageMaskCanvas = forwardRef<ImageMaskCanvasRef, ImageMaskCanvasProps>((pr
   const [isDrawingPolygon, setIsDrawingPolygon] = useState(false);
   const [tempPolygonPoint, setTempPolygonPoint] = useState<Point | null>(null);
   
+  // Touch gesture state for iPad support
+  const [lastTouchDistance, setLastTouchDistance] = useState<number>(0);
+  const [lastTouchCenter, setLastTouchCenter] = useState<Point | null>(null);
+  const [touchStartTime, setTouchStartTime] = useState<number>(0);
+  
   // Container size tracking for responsive layout
   const [containerSize, setContainerSize] = useState<{ width: number; height: number }>({ width: 800, height: 600 });
   const containerRef = useRef<HTMLDivElement>(null);
@@ -577,6 +582,126 @@ const ImageMaskCanvas = forwardRef<ImageMaskCanvasRef, ImageMaskCanvasProps>((pr
     setStartPoint(null);
   }, [isDrawing, props.toolMode, currentBox, width, height, drawOnMask, drawBoxOnMask, saveToHistory]);
 
+  // Touch event handlers for iPad support
+  const handleTouchStart = (e: Konva.KonvaEventObject<TouchEvent>) => {
+    e.evt.preventDefault();
+    const touches = e.evt.touches;
+    setTouchStartTime(Date.now());
+
+    if (touches.length === 2) {
+      // Two-finger gesture - setup for zoom/pan detection
+      const distance = getTouchDistance(touches[0], touches[1]);
+      const center = getTouchCenter(touches[0], touches[1]);
+      setLastTouchDistance(distance);
+      setLastTouchCenter(center);
+    } else if (touches.length === 1) {
+      // Single touch - always tool action (drawing, selecting, etc.)
+      const stagePoint = getStagePointFromTouch(touches[0]);
+      if (stagePoint) {
+        handleMouseDown({
+          target: e.target,
+          evt: { ...e.evt, clientX: touches[0].clientX, clientY: touches[0].clientY }
+        } as any);
+      }
+    }
+  };
+
+  const handleTouchMove = (e: Konva.KonvaEventObject<TouchEvent>) => {
+    e.evt.preventDefault();
+    const touches = e.evt.touches;
+
+    if (touches.length === 2) {
+      // Two-finger gesture - handle both zoom and pan
+      const distance = getTouchDistance(touches[0], touches[1]);
+      const center = getTouchCenter(touches[0], touches[1]);
+      
+      if (lastTouchDistance > 0 && lastTouchCenter) {
+        const stage = stageRef.current;
+        if (stage) {
+          const stageBox = stage.container().getBoundingClientRect();
+          const currentStageCenter = {
+            x: center.x - stageBox.left,
+            y: center.y - stageBox.top
+          };
+          const lastStageCenter = {
+            x: lastTouchCenter.x - stageBox.left,
+            y: lastTouchCenter.y - stageBox.top
+          };
+
+          // Calculate zoom change
+          const scaleChange = distance / lastTouchDistance;
+          const newScale = Math.min(Math.max(1, scale * scaleChange), 10);
+          
+          // Calculate pan change (movement of center point)
+          const centerDx = currentStageCenter.x - lastStageCenter.x;
+          const centerDy = currentStageCenter.y - lastStageCenter.y;
+          
+          // Apply zoom transformation around the gesture center
+          const mousePointTo = {
+            x: (currentStageCenter.x - position.x) / scale,
+            y: (currentStageCenter.y - position.y) / scale,
+          };
+
+          let newPosition = {
+            x: currentStageCenter.x - mousePointTo.x * newScale,
+            y: currentStageCenter.y - mousePointTo.y * newScale,
+          };
+
+          // Apply pan transformation
+          newPosition.x += centerDx;
+          newPosition.y += centerDy;
+
+          setScale(newScale);
+          setPosition(newPosition);
+          
+          if (Math.abs(scaleChange - 1) > 0.01) {
+            props.onZoomChange?.(Math.round(newScale * 100));
+          }
+        }
+      }
+      
+      setLastTouchDistance(distance);
+      setLastTouchCenter(center);
+    } else if (touches.length === 1) {
+      // Single touch - always tool action (drawing, selecting, etc.)
+      const stagePoint = getStagePointFromTouch(touches[0]);
+      if (stagePoint) {
+        handleMouseMove({
+          target: e.target,
+          evt: { ...e.evt, clientX: touches[0].clientX, clientY: touches[0].clientY }
+        } as any);
+      }
+    }
+  };
+
+  const handleTouchEnd = (e: Konva.KonvaEventObject<TouchEvent>) => {
+    e.evt.preventDefault();
+    const touches = e.evt.touches;
+    const touchDuration = Date.now() - touchStartTime;
+
+    if (touches.length === 0) {
+      // All touches ended
+      setLastTouchDistance(0);
+      setLastTouchCenter(null);
+      
+      // End any active drawing/tool action
+      handleMouseUp();
+    } else if (touches.length === 1) {
+      // One finger remaining after two-finger gesture - reset gesture state but continue with single touch
+      setLastTouchDistance(0);
+      setLastTouchCenter(null);
+      
+      // Start single-touch action (drawing) with remaining finger
+      const stagePoint = getStagePointFromTouch(touches[0]);
+      if (stagePoint) {
+        handleMouseDown({
+          target: e.target,
+          evt: { ...e.evt, clientX: touches[0].clientX, clientY: touches[0].clientY }
+        } as any);
+      }
+    }
+  };
+
   const clearMask = () => {
     if (!maskCanvas || !tempCanvas || !image) return;
 
@@ -904,11 +1029,30 @@ const ImageMaskCanvas = forwardRef<ImageMaskCanvasRef, ImageMaskCanvasProps>((pr
 
   const dimensions = calculateDimensions();
   
+  // Helper functions for touch gestures
+  const getTouchDistance = (touch1: Touch, touch2: Touch): number => {
+    const dx = touch1.clientX - touch2.clientX;
+    const dy = touch1.clientY - touch2.clientY;
+    return Math.sqrt(dx * dx + dy * dy);
+  };
 
-  
+  const getTouchCenter = (touch1: Touch, touch2: Touch): Point => {
+    return {
+      x: (touch1.clientX + touch2.clientX) / 2,
+      y: (touch1.clientY + touch2.clientY) / 2
+    };
+  };
 
-  
-
+  const getStagePointFromTouch = (touch: Touch): Point | null => {
+    const stage = stageRef.current;
+    if (!stage) return null;
+    
+    const stageBox = stage.container().getBoundingClientRect();
+    return {
+      x: touch.clientX - stageBox.left,
+      y: touch.clientY - stageBox.top
+    };
+  };
 
   // Force Stage to update its size
   useEffect(() => {
@@ -948,11 +1092,15 @@ const ImageMaskCanvas = forwardRef<ImageMaskCanvasRef, ImageMaskCanvasProps>((pr
           onMouseUp={handleMouseUp}
           onWheel={handleWheel}
           onMouseLeave={handleMouseLeave}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
           data-testid="drawing-stage"
           style={{
                       cursor: props.toolMode === 'move' ? 'grab' :
                  props.toolMode === 'mask-box' || props.toolMode === 'eraser-box' || props.toolMode === 'mask-polygon' ? 'crosshair' :
-                 props.toolMode === 'clear' ? 'pointer' : 'none'
+                 props.toolMode === 'clear' ? 'pointer' : 'none',
+            touchAction: 'none' // Prevent default touch behaviors
           }}
         >
         <Layer ref={layerRef}>
