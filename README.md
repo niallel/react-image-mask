@@ -571,12 +571,6 @@ To build the library:
 npm run build
 ```
 
-To run Storybook:
-
-```bash
-npm run storybook
-```
-
 ## License
 
 MIT
